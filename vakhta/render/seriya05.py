@@ -148,8 +148,10 @@ def leg_scene(img, t, prog):
         y = (k * 260 - scroll * .9) % 2860 - 260
         d.line([150, y, 570, y], fill=(180, 184, 192), width=6)
     stripe = 1500 - scroll
-    d.rectangle([150, stripe, 570, stripe + 40], fill=(232, 96, 60), outline=INK, width=5)
-    d.rectangle([150, stripe + 40, 570, H + 10], fill=(40, 42, 48), outline=INK, width=6)
+    if stripe < H:
+        d.rectangle([150, stripe, 570, stripe + 40], fill=(232, 96, 60), outline=INK, width=5)
+    if stripe + 40 < H:
+        d.rectangle([150, stripe + 40, 570, H + 10], fill=(40, 42, 48), outline=INK, width=6)
     # лестница
     d.line([300, -10, 300, H + 10], fill=(110, 114, 124), width=12)
     d.line([420, -10, 420, H + 10], fill=(110, 114, 124), width=12)

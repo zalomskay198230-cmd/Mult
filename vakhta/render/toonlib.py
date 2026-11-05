@@ -28,6 +28,8 @@ REFL = (214, 218, 222)        # светоотражающие полосы
 NAVY = (44, 58, 92)
 GREY = (150, 150, 156)
 YELLOW = (250, 226, 90)
+KUR_JACKET = (214, 168, 54)      # выцветшая куртка курьера
+KUR_BAG = (44, 138, 148)         # термо-рюкзак
 DECK = (92, 96, 104)
 SEA = (44, 54, 72)
 O = 5                         # толщина контура (при масштабе 1)
@@ -259,12 +261,16 @@ def toon(img, x, y, s, who="ilya", face="neutral", arms=("down", "down"), look=(
     o = int(O * s)
     y = y - bob * s
     look_x, look_y = look
-    outfit = {"ilya": COVER, "timur": COVER, "misha": NAVY, "dasha": (52, 120, 128)}[who]
-    pants = {"ilya": COVER_D, "timur": COVER_D, "misha": (70, 72, 80), "dasha": (60, 62, 72)}[who]
+    outfit = {"ilya": COVER, "timur": COVER, "misha": NAVY, "dasha": (52, 120, 128), "kurer": KUR_JACKET}[who]
+    pants = {"ilya": COVER_D, "timur": COVER_D, "misha": (70, 72, 80), "dasha": (60, 62, 72), "kurer": (58, 62, 72)}[who]
     outfit = outfit_c or outfit
     pants = pants_c or pants
     if stripes is None:
         stripes = who in ("ilya", "timur") and outfit_c is None
+    if who == "kurer":   # квадратный термо-рюкзак за спиной
+        d.rounded_rectangle([x - 112 * s, y - 478 * s, x + 112 * s, y - 196 * s], radius=int(14 * s), fill=KUR_BAG, outline=INK, width=o)
+        d.line([x - 112 * s, y - 440 * s, x + 112 * s, y - 440 * s], fill=INK, width=max(2, o // 2))
+        d.rectangle([x - 40 * s, y - 470 * s, x + 40 * s, y - 452 * s], fill=(30, 90, 98), outline=INK, width=max(2, o // 2))
     # ноги
     if legs:
         for side in (-1, 1):
@@ -298,6 +304,16 @@ def toon(img, x, y, s, who="ilya", face="neutral", arms=("down", "down"), look=(
             d.rectangle([x - 78 * s + o, y + yy * s, x + 78 * s - o, y + (yy + 14) * s], fill=REFL)
         d.rectangle([x - 6 * s, y - 376 * s, x + 6 * s, y - 180 * s], fill=COVER_D)
         d.rounded_rectangle([x + 18 * s, y - 360 * s, x + 64 * s, y - 334 * s], radius=int(4 * s), fill=(40, 44, 56), outline=INK, width=max(2, o // 2))
+    elif who == "kurer":
+        d.line([x, y - 376 * s, x, y - 180 * s], fill=INK, width=max(2, o // 2))                     # молния
+        d.rectangle([x - 70 * s, y - 250 * s, x - 22 * s, y - 206 * s], fill=(150, 140, 110), outline=INK, width=max(2, o // 2))  # заплатка
+        for k in range(3):
+            d.line([x - 66 * s + k * 16 * s, y - 252 * s, x - 62 * s + k * 16 * s, y - 244 * s], fill=INK, width=2)
+        for side in (-1, 1):   # лямки рюкзака
+            d.line([x + side * 46 * s, y - 380 * s, x + side * 40 * s, y - 200 * s], fill=(40, 44, 52), width=int(16 * s))
+        d.line([x - 44 * s, y - 300 * s, x + 44 * s, y - 300 * s], fill=(40, 44, 52), width=int(10 * s))   # грудная стяжка
+        d.ellipse([x + 22 * s, y - 286 * s, x + 66 * s, y - 242 * s], fill=(90, 96, 104), outline=INK, width=max(2, o // 2))  # фильтр респиратора
+        d.ellipse([x + 34 * s, y - 274 * s, x + 54 * s, y - 254 * s], fill=(50, 54, 60))
     elif who == "misha":
         d.polygon([(x - 30 * s, y - 380 * s), (x, y - 330 * s), (x + 30 * s, y - 380 * s)], fill=(210, 210, 214), outline=INK)
         d.line([x, y - 330 * s, x, y - 180 * s], fill=INK, width=max(2, o // 2))
@@ -371,6 +387,26 @@ def toon(img, x, y, s, who="ilya", face="neutral", arms=("down", "down"), look=(
         d.arc([hx - R - 12 * s, hy - R - 22 * s, hx + R + 12 * s, hy + 40 * s], 190, 350, fill=(40, 40, 46), width=int(14 * s))
         for side in (-1, 1):
             d.rounded_rectangle([hx + side * (R + 4 * s) - 18 * s, hy - 20 * s, hx + side * (R + 4 * s) + 18 * s, hy + 34 * s], radius=int(10 * s), fill=(54, 54, 62), outline=INK, width=o)
+    elif who == "kurer":
+        hair = (92, 62, 40)
+        d.chord([hx - R - 4 * s, hy - R * 1.14, hx + R + 4 * s, hy - 6 * s], 180, 360, fill=hair, outline=INK, width=o)
+        for k in range(7):   # торчащие пряди
+            bx = hx - R * .8 + k * R * .27
+            d.polygon([(bx - 14 * s, hy - R * .9), (bx + 2 * s, hy - R * 1.32 - (k % 2) * 12 * s), (bx + 16 * s, hy - R * .9)], fill=hair, outline=INK)
+        d.chord([hx - R + o, hy - R * .95, hx + R - o, hy - 6 * s], 200, 340, fill=hair)
+        # очки-гогглы на лбу
+        d.line([hx - R - 2 * s, hy - 62 * s, hx + R + 2 * s, hy - 62 * s], fill=(36, 36, 42), width=int(14 * s))
+        for side in (-1, 1):
+            gx = hx + side * 36 * s
+            d.ellipse([gx - 30 * s, hy - 90 * s, gx + 30 * s, hy - 34 * s], fill=(70, 74, 82), outline=INK, width=o)
+            d.ellipse([gx - 20 * s, hy - 80 * s, gx + 20 * s, hy - 44 * s], fill=(236, 170, 70), outline=INK, width=max(2, o // 2))
+            d.arc([gx - 14 * s, hy - 76 * s, gx + 4 * s, hy - 58 * s], 180, 270, fill=(255, 236, 190), width=int(4 * s))
+        # пластырь на носу и шрам на щеке
+        d.rounded_rectangle([hx - 16 * s, hy + 18 * s, hx + 16 * s, hy + 30 * s], radius=int(4 * s), fill=(236, 214, 170), outline=INK, width=max(2, o // 2))
+        d.line([hx + 56 * s, hy + 4 * s, hx + 70 * s, hy + 34 * s], fill=(170, 100, 90), width=int(4 * s))
+        # красная бандана на шее
+        d.polygon([(hx - 60 * s, y - 392 * s), (hx + 60 * s, y - 392 * s), (hx + 6 * s, y - 316 * s)], fill=(200, 56, 48), outline=INK)
+        d.ellipse([hx - 62 * s, y - 404 * s, hx + 62 * s, y - 378 * s], fill=(200, 56, 48), outline=INK, width=max(2, o // 2))
     # кисти — поверх всего, если руки подняты к лицу
     for hp in hands:
         hand(d, hp, s)

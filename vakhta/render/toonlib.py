@@ -796,7 +796,7 @@ def frame(t, funcs, title_scene="s01"):
     return Image.new("RGB", (W, H))
 
 
-def build_audio(path, static=(), hits=(), knocks=()):
+def build_audio(path, static=(), hits=(), knocks=(), rotor=()):
     """озвучка + ветер + гул; static — интервалы помех рации, hits — низкие удары, knocks — стук"""
     inputs, filters, mix = [], [], []
     for i, (start, clip, d) in enumerate(cues):
@@ -825,6 +825,10 @@ def build_audio(path, static=(), hits=(), knocks=()):
         inputs += ["-f", "lavfi", "-i", "aevalsrc='1.0*sin(2*PI*95*t)*exp(-t*28)+0.5*sin(2*PI*210*t)*exp(-t*45)+0.25*(random(0)-0.5)*exp(-t*80)':d=0.5"]
         ms = int(kt * 1000)
         filters.append(f"[{k}:a]lowpass=f=1800,aecho=0.6:0.4:60:0.3,volume=1.4,adelay={ms}|{ms}[kn{j}]"); mix.append(f"[kn{j}]"); k += 1
+    if rotor:   # шум винтов вертолёта: низкий шум с пульсацией
+        cond = "+".join(f"between(t,{a:.2f},{b:.2f})" for a, b in rotor)
+        inputs += ["-f", "lavfi", "-i", f"anoisesrc=color=brown:amplitude=0.8:d={D}:seed=11"]
+        filters.append(f"[{k}:a]lowpass=f=260,tremolo=f=11:d=0.85,volume='if({cond},0.9,0)':eval=frame[rotor]"); mix.append("[rotor]"); k += 1
     filters.append("".join(mix) + f"amix=inputs={len(mix)}:normalize=0,alimiter=limit=0.95,afade=t=out:st={TOTAL-1.5:.2f}:d=1.5[out]")
     subprocess.check_call(["ffmpeg", "-y", "-v", "error"] + inputs + ["-filter_complex", ";".join(filters), "-map", "[out]",
                                                                      "-ac", "2", "-ar", "44100", "-t", D, path])

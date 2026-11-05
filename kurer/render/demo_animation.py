@@ -28,15 +28,44 @@ def city_bg(scroll):
     return img
 
 
-def dust(img, t, x, y, k=1.0):
+RUN_F = 1.55          # шагов-циклов в секунду при беге (как в rig)
+RUN_SCROLL = 520      # скорость дороги, px/с
+RUN_X, RUN_S = W / 2 - 20, .8
+
+
+def foot_contacts(lt):
+    """моменты касания земли и x точки касания на экране"""
+    out = []
+    k = 0
+    while True:
+        for leg_ph0 in (math.pi / 2, 3 * math.pi / 2):   # ближняя нога и дальняя
+            tc = (leg_ph0 + 2 * math.pi * k) / (2 * math.pi * RUN_F) - .03
+            if tc > lt:
+                return out
+            th, kn, _, _ = rig.cycle("run", 2 * math.pi * RUN_F * tc + (0 if leg_ph0 < math.pi else -math.pi))
+            dx = rig.THIGH * math.sin(math.radians(th)) + rig.SHIN * math.sin(math.radians(th - kn))
+            out.append((tc, RUN_X + (dx + 40) * RUN_S))
+        k += 1
+
+
+def dust(img, lt, ground):
+    """облачка пыли из-под каждого шага: остаются на дороге, расплываются и тают"""
     lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(lay)
-    rnd = random.Random(int(t * 3))
-    for i in range(6):
-        life = (t * 2.5 + i / 6) % 1
-        r = 10 + 40 * life
-        d.ellipse([x - 120 * life - r, y - 20 * life - r * .6, x - 120 * life + r, y - 20 * life + r * .6], fill=(150, 140, 130, int(120 * (1 - life) * k)))
-    return Image.alpha_composite(img.convert("RGBA"), lay.filter(ImageFilter.GaussianBlur(4))).convert("RGB")
+    for tc, x0 in foot_contacts(lt):
+        age = lt - tc
+        if age > .7:
+            continue
+        k = age / .7
+        x = x0 - RUN_SCROLL * age
+        rnd = random.Random(int(tc * 1000))
+        for i in range(5):
+            ox = rnd.uniform(-30, 10) - 40 * k * rnd.uniform(.5, 1.2)
+            oy = -rnd.uniform(4, 26) * k - 4
+            r = 12 + 40 * k * rnd.uniform(.7, 1.2)
+            a = int(175 * (1 - k) ** 1.3)
+            d.ellipse([x + ox - r, ground + oy - r * .55, x + ox + r, ground + oy + r * .55], fill=(156, 146, 134, a))
+    return Image.alpha_composite(img.convert("RGBA"), lay.filter(ImageFilter.GaussianBlur(3))).convert("RGB")
 
 
 def frame(t):
@@ -61,11 +90,10 @@ def frame(t):
         img = city_bg(400 + lt * 160)
         fig = rig.side_figure((W, H), W / 2 - 40, ground, .8, lt, "walk")
     else:
-        img = city_bg(1000 + lt * 520)
-        fig = rig.side_figure((W, H), W / 2 - 20, ground, .8, lt, "run", expr="shock")
+        img = city_bg(1000 + lt * RUN_SCROLL)
+        img = dust(img, lt, ground - 4)   # пыль позади ног
+        fig = rig.side_figure((W, H), RUN_X, ground, RUN_S, lt, "run", expr="shock")
     img.paste(fig, (0, 0), fig)
-    if name == "бежит":
-        img = dust(img, lt, W / 2 - 60, ground - 10)
     caption(img, name)
     a = min(lt / .2, (dur - lt) / .2, 1)
     if a < 1:

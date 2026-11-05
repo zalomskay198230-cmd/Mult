@@ -168,7 +168,7 @@ def side_figure(size, ox, ground_y, s, t, mode="walk", speed=1.0, expr="neutral"
     limb(p, [hip, kn_n, an_n], [74, 60, 46], R.PANTS, dark=R.PANTS_SH)
     boot(p, an_n, max(-10, min(30, -(near[0] - near[1]) * .5)))
     # шея, бандана, голова
-    hx, hy = U((10, 0))
+    hx, hy = 10 + lean * (HIP_Y - 186), 0   # голова сидит на шее, а не уезжает с наклоном
     p.ox += hx * p.s
     p.oy += (hy) * p.s
     neck = [(-10, 140), (24, 140), (24, 190), (-12, 190)]

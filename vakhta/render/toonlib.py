@@ -251,7 +251,9 @@ def hand(d, p, s):
 
 
 def toon(img, x, y, s, who="ilya", face="neutral", arms=("down", "down"), look=(0, 0),
-         t=0.0, talk=False, blink=True, walk=None, bob=0.0, legs=True):
+         t=0.0, talk=False, blink=True, walk=None, bob=0.0, legs=True,
+         outfit_c=None, pants_c=None, stripes=None, pupil=None):
+    """outfit_c/pants_c — свои цвета одежды, stripes — светоотражающие полосы, pupil — размер зрачка (1 = весь глаз чёрный)"""
     """Мультяшный человек. (x, y) — точка между ступнями. s — масштаб."""
     d = ImageDraw.Draw(img)
     o = int(O * s)
@@ -259,13 +261,17 @@ def toon(img, x, y, s, who="ilya", face="neutral", arms=("down", "down"), look=(
     look_x, look_y = look
     outfit = {"ilya": COVER, "timur": COVER, "misha": NAVY, "dasha": (52, 120, 128)}[who]
     pants = {"ilya": COVER_D, "timur": COVER_D, "misha": (70, 72, 80), "dasha": (60, 62, 72)}[who]
+    outfit = outfit_c or outfit
+    pants = pants_c or pants
+    if stripes is None:
+        stripes = who in ("ilya", "timur") and outfit_c is None
     # ноги
     if legs:
         for side in (-1, 1):
             k = 0 if walk is None else math.sin(walk * 9 + (0 if side < 0 else math.pi))
             lx = x + side * 30 * s + k * 24 * s
             d.rectangle([lx - 26 * s, y - 190 * s, lx + 26 * s, y - 28 * s], fill=pants, outline=INK, width=o)
-            if who in ("ilya", "timur"):
+            if stripes:
                 d.rectangle([lx - 26 * s + o, y - 95 * s, lx + 26 * s - o, y - 82 * s], fill=REFL)
             d.rounded_rectangle([lx - 34 * s, y - 34 * s, lx + 34 * s, y], radius=int(10 * s), fill=(106, 66, 34), outline=INK, width=o)
     # руки (за туловищем)
@@ -287,7 +293,7 @@ def toon(img, x, y, s, who="ilya", face="neutral", arms=("down", "down"), look=(
         hands.append((ex, ey))
     # туловище
     d.rounded_rectangle([x - 78 * s, y - 380 * s, x + 78 * s, y - 175 * s], radius=int(18 * s), fill=outfit, outline=INK, width=o)
-    if who in ("ilya", "timur"):
+    if stripes:
         for yy in (-300, -240):
             d.rectangle([x - 78 * s + o, y + yy * s, x + 78 * s - o, y + (yy + 14) * s], fill=REFL)
         d.rectangle([x - 6 * s, y - 376 * s, x + 6 * s, y - 180 * s], fill=COVER_D)
@@ -324,6 +330,8 @@ def toon(img, x, y, s, who="ilya", face="neutral", arms=("down", "down"), look=(
         else:
             d.ellipse([ex - ew, ey - eh, ex + ew, ey + eh], fill=(255, 255, 255), outline=INK, width=o)
             pr = (9 if big else 11) * s
+            if pupil:
+                pr = max(pr, min(ew, eh) * pupil)
             px, py = ex + look_x * 10 * s, ey + look_y * 10 * s + 4 * s
             d.ellipse([px - pr, py - pr, px + pr, py + pr], fill=INK)
         if face in ("worried", "scared"):

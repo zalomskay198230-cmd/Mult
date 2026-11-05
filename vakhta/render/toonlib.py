@@ -560,6 +560,146 @@ def window(img, box, t, glow_xy=None):
 
 
 
+# ---------- коридор, дверь, лужа, пар ----------
+WALL, WALL_D, FLOOR, CEIL = (156, 160, 164), (132, 136, 142), (96, 100, 106), (118, 122, 128)
+DOOR = (186, 176, 150)
+
+
+# ---------- коридор в перспективе ----------
+VX, VY, F = W / 2, 560, 400
+
+
+def pj(X, Y, Z):
+    return (VX + X * F / Z, VY + Y * F / Z)
+
+
+def corridor(img, cam=0.0, zmax=6.0, prints=True, doors=21, t=0.0):
+    d = ImageDraw.Draw(img)
+    ze = zmax - cam
+    # стены, пол, потолок
+    d.polygon([pj(-1, -1.4, .2), pj(1, -1.4, .2), pj(1, -1.4, ze), pj(-1, -1.4, ze)], fill=CEIL)
+    d.polygon([pj(-1, 1.8, .2), pj(1, 1.8, .2), pj(1, 1.8, ze), pj(-1, 1.8, ze)], fill=FLOOR)
+    d.polygon([pj(-1, -1.4, .2), pj(-1, 1.8, .2), pj(-1, 1.8, ze), pj(-1, -1.4, ze)], fill=WALL)
+    d.polygon([pj(1, -1.4, .2), pj(1, 1.8, .2), pj(1, 1.8, ze), pj(1, -1.4, ze)], fill=WALL_D)
+    d.rectangle([*pj(-1, -1.4, ze), *pj(1, 1.8, ze)], fill=(170, 174, 178), outline=INK, width=4)
+    for a, b in [((-1, -1.4), (-1, 1.8)), ((1, -1.4), (1, 1.8))]:
+        pass
+    for X, Y in [(-1, -1.4), (1, -1.4), (-1, 1.8), (1, 1.8)]:
+        d.line([pj(X, Y, .2), pj(X, Y, ze)], fill=INK, width=5)
+    # плинтус
+    for X in (-1, 1):
+        d.polygon([pj(X, 1.6, .3), pj(X, 1.8, .3), pj(X, 1.8, ze), pj(X, 1.6, ze)], fill=(80, 84, 92))
+    # двери (по очереди слева/справа), дальние рисуем первыми
+    items = []
+    for i in range(doors):
+        side = -1 if i % 2 == 0 else 1
+        z0 = 1.1 + (i // 2) * 0.48 - cam
+        if z0 < .35 or z0 + .3 > ze:
+            continue
+        items.append((z0, side, i))
+    for z0, side, i in sorted(items, reverse=True):
+        z1 = z0 + .3
+        q = [pj(side, -.5, z0), pj(side, -.5, z1), pj(side, 1.8, z1), pj(side, 1.8, z0)]
+        d.polygon(q, fill=DOOR, outline=INK, width=max(2, int(6 / z0)))
+        hx, hy = pj(side, .7, z0 + .25)
+        r = max(2, 9 / z0)
+        d.ellipse([hx - r, hy - r, hx + r, hy + r], fill=(120, 120, 126), outline=INK)
+    # лампы на потолке
+    for k in range(6):
+        z = 1.3 + k * .9 - cam
+        if z < .4 or z > ze:
+            continue
+        a, b = pj(-.25, -1.4, z), pj(.25, -1.4, z + .25)
+        d.rectangle([a[0], a[1], b[0], b[1] + 3], fill=(250, 248, 224), outline=INK, width=2)
+        glow(img, ((a[0] + b[0]) / 2, a[1] + 10), max(10, 70 / z), (70, 66, 46), .8)
+    # мокрые следы по полу
+    if prints:
+        d = ImageDraw.Draw(img)
+        for k in range(14):
+            z = 1.0 + k * .34 - cam
+            if z < .5 or z > ze - .1:
+                continue
+            x, y = pj(.16 if k % 2 else -.16, 1.8, z)
+            boot_print(d, x, y, 1.1 / z, 0, k % 2 == 0)
+
+
+def big_number(img, txt, y, size=150, col=YELLOW, pop=1.0):
+    d = ImageDraw.Draw(img)
+    f = ImageFont.truetype(FONT_SUB, int(size * (0.8 + 0.2 * pop)))
+    x = (W - f.getlength(txt)) / 2
+    d.text((x, y), txt, font=f, fill=col, stroke_width=6, stroke_fill=(58, 50, 14))
+
+
+def door_close(img, t, knock=0.0, dx=0, weld=0.0, hot=False, ajar=0.0, frost=True):
+    d = ImageDraw.Draw(img)
+    jx = knock * 6 * math.sin(t * 80)
+    x0, y0, x1, y1 = 150 + jx + dx, 120, 570 + jx + dx, 1060
+    d.rectangle([x0 - 26, y0 - 26, x1 + 26, y1], fill=(120, 124, 130), outline=INK, width=6)
+    if ajar > 0:  # тёмная щель со стороны ручки
+        gap = 70 * ajar
+        d.rectangle([x1 - gap, y0, x1, y1], fill=(8, 10, 14))
+        x1 = x1 - gap
+    d.rectangle([x0, y0, x1, y1], fill=(170, 176, 184), outline=INK, width=7)
+    # пустая табличка
+    d.rectangle([x0 + 130, y0 + 90, x1 - 130, y0 + 170], fill=(150, 156, 164), outline=INK, width=5)
+    for sx in (x0 + 146, x1 - 146):
+        d.ellipse([sx - 6, y0 + 124, sx + 6, y0 + 136], fill=INK)
+    d.ellipse([x1 - 80, 590, x1 - 40, 630], fill=(120, 120, 126), outline=INK, width=5)
+    d.rectangle([x1 - 120, 600, x1 - 60, 620], fill=(120, 120, 126), outline=INK, width=4)
+    # сварной шов по правому краю
+    if weld > 0:
+        yb = y0 + (y1 - y0) * weld
+        for yy in np.arange(y0 + 6, yb, 12):
+            col = (255, 170, 60) if hot and yy > yb - 120 else (110, 104, 96)
+            d.ellipse([x1 - 12, yy - 8, x1 + 12, yy + 8], fill=col, outline=INK, width=2)
+    if not frost:
+        return (x0, x1, y1)
+    # иней
+    rnd = random.Random(4)
+    for k in range(40):
+        side = rnd.choice([0, 1, 2])
+        if side == 0:
+            x, y = x0 + rnd.uniform(0, 30), rnd.uniform(y0, y1)
+        elif side == 1:
+            x, y = x1 - rnd.uniform(0, 30), rnd.uniform(y0, y1)
+        else:
+            x, y = rnd.uniform(x0, x1), y0 + rnd.uniform(0, 30)
+        a = rnd.uniform(0, 6.3); l = rnd.uniform(10, 26)
+        d.line([x, y, x + l * math.cos(a), y + l * math.sin(a)], fill=(236, 246, 255), width=3)
+    return (x0, x1, y1)
+
+
+def floor_strip(img):
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 1060, W, H], fill=FLOOR); d.line([0, 1060, W, 1060], fill=INK, width=6)
+
+
+def vapor(img, t, x0, x1, y1, k=1.0):
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(lay)
+    rnd = random.Random(8)
+    for i in range(16):
+        ph = rnd.random()
+        life = (t * .35 + ph) % 1
+        x = rnd.uniform(x0, x1) + 40 * math.sin(t + i)
+        y = y1 - 10 - life * 260
+        r = 30 + 70 * life
+        a = int(110 * (1 - life) * k)
+        ld.ellipse([x - r, y - r * .6, x + r, y + r * .6], fill=(230, 240, 250, a))
+    return Image.alpha_composite(img.convert("RGBA"), lay.filter(ImageFilter.GaussianBlur(10))).convert("RGB")
+
+
+def puddle(img, t, x0, x1, y1, grow):
+    d = ImageDraw.Draw(img)
+    w = (x1 - x0) * (.45 + .6 * grow)
+    cx = (x0 + x1) / 2
+    d.ellipse([cx - w / 2, y1 - 14, cx + w / 2, y1 + 60 + 90 * grow], fill=WET, outline=INK, width=4)
+    d.arc([cx - w / 3, y1 + 10, cx + w / 4, y1 + 40 + 50 * grow], 190, 300, fill=(150, 196, 226), width=6)
+    # свет из-под двери
+    d.rectangle([x0 + 4, y1 - 8, x1 - 4, y1], fill=(150, 210, 240))
+
+
+
 def frame(t, funcs, title_scene="s01"):
     for name, start, length, sc in scenes:
         if start <= t < start + length:

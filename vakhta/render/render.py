@@ -227,11 +227,9 @@ def bg_sea(key="sea", horizon=720, lights=True, blur=5, seed=11):
         w = rnd.choice([18, 36, 54]); h = rnd.uniform(10, 60)
         c = rnd.randint(36, 70)
         d.rectangle([x, y, x + w, y + h], fill=(c, c + 8, c + 22))
-    if lights:  # огоньки далёких платформ
-        for _ in range(26):
-            x = rnd.uniform(0, W); y = horizon - rnd.uniform(-8, 40)
-            r = rnd.uniform(5, 16)
-            d.ellipse([x - r, y - r, x + r, y + r], fill=(232, 130, 70))
+    if lights:  # далёкие платформы с огнями
+        for (px, ps) in ((110, .20), (520, .14), (660, .24)):
+            paste_platform(img, px + rnd.uniform(-20, 20), horizon + 4, ps)
     img = img.filter(ImageFilter.GaussianBlur(blur))
     img = smoke(img, seed)
     _BG[key] = img
@@ -435,6 +433,136 @@ def railing(d, y, col=(226, 110, 40)):
         d.line([x, y, x + 10, y + 180], fill=col, width=7)
 
 
+
+# ---------- морская платформа сбоку (дальний план) ----------
+_PLAT = {}
+
+
+def platform_layer(s, lit):
+    """RGBA-слой платформы. Якорь: центр по x, ватерлиния по y → (ax, ay)."""
+    key = (round(s, 3), lit)
+    if key in _PLAT:
+        return _PLAT[key]
+    Wl, Hl = int(820 * s), int(720 * s)
+    ax, ay = 400 * s, 680 * s
+    lay = Image.new("RGBA", (Wl, Hl), (0, 0, 0, 0))
+    d = ImageDraw.Draw(lay)
+    o = max(1, int(5 * s))
+    P = lambda u, v: (ax + u * s, ay + v * s)
+    R = lambda u0, v0, u1, v1: [ax + u0 * s, ay + v0 * s, ax + u1 * s, ay + v1 * s]
+    LIGHT, MID, DARKG = (214, 216, 222), (184, 188, 196), (150, 154, 162)
+    WIN = (255, 214, 110) if lit else (110, 114, 124)
+    lights = []
+    # раскосы между опорами
+    d.rectangle(R(-260, -150, 180, -122), fill=None, outline=INK, width=o)
+    for u in range(-260, 180, 44):
+        d.line([P(u, -150), P(u + 44, -122)], fill=INK, width=o)
+        d.line([P(u, -122), P(u + 44, -150)], fill=INK, width=o)
+    # опоры
+    for u in (-250, -110, 30, 170):
+        d.rectangle(R(u - 26, -150, u + 26, -66), fill=LIGHT, outline=INK, width=o)
+        d.rectangle(R(u - 26, -66, u + 26, -56), fill=(232, 96, 60), outline=INK, width=max(1, o // 2))
+        d.rectangle(R(u - 26, -56, u + 26, 10), fill=(40, 42, 48), outline=INK, width=o)
+        d.polygon([P(u - 34, -150), P(u + 34, -150), P(u + 24, -168), P(u - 24, -168)], fill=MID, outline=INK)
+    # диагональная подпорка и лестница
+    d.line([P(370, -190), P(176, -70)], fill=DARKG, width=max(2, int(9 * s)))
+    d.line([P(200, -190), P(200, 0)], fill=DARKG, width=max(1, int(5 * s)))
+    for v in range(-180, 0, 18):
+        d.line([P(192, v), P(212, v)], fill=DARKG, width=max(1, int(3 * s)))
+    # нижняя палуба
+    d.rectangle(R(-300, -215, 100, -160), fill=LIGHT, outline=INK, width=o)
+    d.rectangle(R(-300, -215, -160, -160), fill=MID, outline=INK, width=o)
+    for u in (-120, -50, 20, 80):
+        d.rounded_rectangle(R(u - 14, -202, u + 14, -176), radius=max(1, int(4 * s)), fill=WIN, outline=INK, width=max(1, o // 2))
+        lights.append(P(u, -189))
+    # перила
+    d.line([P(-300, -232), P(100, -232)], fill=INK, width=max(1, o // 2))
+    for u in range(-300, 101, 20):
+        d.line([P(u, -232), P(u, -215)], fill=INK, width=max(1, o // 2))
+    # модуль с обшивкой
+    d.rectangle(R(-20, -330, 375, -190), fill=LIGHT, outline=INK, width=o)
+    for u in range(0, 375, 22):
+        d.line([P(u, -326), P(u, -194)], fill=DARKG, width=max(1, int(3 * s)))
+    for u in (40, 150, 260):
+        d.rectangle(R(u, -300, u + 22, -284), fill=WIN, outline=INK, width=max(1, o // 2))
+        lights.append(P(u + 11, -292))
+    # надстройка справа
+    d.rectangle(R(270, -400, 335, -330), fill=MID, outline=INK, width=o)
+    for v in (-388, -366, -344):
+        d.rectangle(R(282, v, 296, v + 10), fill=WIN)
+        lights.append(P(289, v + 5))
+    # буровая вышка
+    def lattice(ub, vb, vt, wb, wt, lean=0):
+        pts_l = [P(ub - wb + lean * 0, vb), P(ub - wt + lean, vt)]
+        pts_r = [P(ub + wb, vb), P(ub + wt + lean, vt)]
+        d.line(pts_l, fill=INK, width=max(1, int(4 * s)))
+        d.line(pts_r, fill=INK, width=max(1, int(4 * s)))
+        n = 9
+        for k in range(n):
+            f0, f1 = k / n, (k + 1) / n
+            v0, v1 = vb + (vt - vb) * f0, vb + (vt - vb) * f1
+            w0, w1 = wb + (wt - wb) * f0, wb + (wt - wb) * f1
+            l0, l1 = lean * f0, lean * f1
+            d.line([P(ub - w0 + l0, v0), P(ub + w0 + l0, v0)], fill=INK, width=max(1, int(3 * s)))
+            d.line([P(ub - w0 + l0, v0), P(ub + w1 + l1, v1)], fill=INK, width=max(1, int(2 * s)))
+            d.line([P(ub + w0 + l0, v0), P(ub - w1 + l1, v1)], fill=INK, width=max(1, int(2 * s)))
+    d.rectangle(R(100, -350, 180, -330), fill=MID, outline=INK, width=o)
+    lattice(140, -350, -580, 36, 12)
+    d.rectangle(R(126, -600, 154, -580), fill=MID, outline=INK, width=max(1, o // 2))
+    d.line([P(140, -600), P(140, -680)], fill=INK, width=max(1, int(4 * s)))
+    if lit:
+        d.ellipse(R(132, -692, 148, -676), fill=(255, 70, 60))
+    lights.append(P(140, -684))
+    # левая решётчатая башня (стрела)
+    lattice(-250, -232, -530, 26, 7, lean=18)
+    _PLAT[key] = (lay, ax, ay, lights)
+    return _PLAT[key]
+
+
+def paste_platform(img, x, base, s, lit=True, alpha=1.0, light_k=1.0):
+    lay, ax, ay, lights = platform_layer(s, lit)
+    if alpha < 1:
+        a = lay.getchannel("A").point(lambda v: int(v * alpha))
+        lay = lay.copy(); lay.putalpha(a)
+    ox, oy = int(x - ax), int(base - ay)
+    img.paste(lay, (ox, oy), lay)
+    if lit and light_k > 0:
+        for (lx, ly) in lights:
+            glow(img, (ox + lx, oy + ly), max(6, 26 * s), (150, 100, 30), light_k * .8)
+
+
+# ---------- отпечаток ботинка ----------
+SOLE = [(-9, 4), (-14, -10), (-16, -24), (-13, -34), (-6, -40), (2, -41), (10, -37), (15, -28), (16, -16), (13, -4), (9, 4)]
+HEEL = [(-11, 14), (-12, 24), (-10, 33), (-4, 37), (4, 37), (10, 33), (12, 24), (11, 14), (6, 11), (-6, 11)]
+WET = (34, 50, 70)
+
+
+def boot_print(d, x, y, s, ang=0.0, left=False):
+    ca, sa = math.cos(ang), math.sin(ang)
+    m = -1 if left else 1
+
+    def tr(v, u):
+        v *= m
+        return (x + (v * ca - u * sa) * s * 1.6, y + (v * sa + u * ca) * s * 1.6)
+    for shape in (SOLE, HEEL):
+        d.polygon([tr(v, u) for v, u in shape], fill=WET, outline=INK, width=max(2, int(4 * s)))
+    # протектор
+    for u in range(-34, 2, 6):
+        half = 12 if -30 < u < -12 else 9
+        d.line([tr(-half, u), tr(half, u - 2)], fill=(22, 32, 46), width=max(2, int(3 * s)))
+    for u in (18, 24, 30):
+        d.line([tr(-8, u), tr(8, u)], fill=(22, 32, 46), width=max(2, int(3 * s)))
+    # мокрый блик и капли
+    d.line([tr(-8, -30), tr(-10, -18)], fill=(150, 196, 226), width=max(2, int(4 * s)))
+    d.line([tr(-6, 16), tr(-7, 24)], fill=(150, 196, 226), width=max(2, int(3 * s)))
+    rnd = random.Random(int(x * 7 + y))
+    for _ in range(3):
+        v, u = rnd.uniform(-26, 26), rnd.uniform(-46, 44)
+        cx, cy = tr(v, u)
+        r = rnd.uniform(2, 4.5) * s
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=WET, outline=INK, width=1)
+
+
 # ---------- сцены ----------
 def s01(t, L):
     img = Image.new("RGB", (W, H), SEA)
@@ -566,20 +694,18 @@ def s07(t, L):
     return zoom(img, 1 + .04 * t / L, .5, .6)
 
 
-LIGHTS = [(60, 690), (125, 686), (150, 688), (290, 682), (312, 684), (334, 686), (470, 690), (560, 684), (585, 686), (660, 689)]
+FAR = [(150, .30, 3.4), (420, .20, 4.3), (610, .36, 5.2)]  # x, масштаб, когда гаснет
 
 
 def s08(t, L):
     img = bg_sea("sea_dark", horizon=700, lights=False, seed=12).copy()
-    d = ImageDraw.Draw(img)
-    for i, (x, y) in enumerate(LIGHTS):
-        k = 1 - min(1, max(0, (t - 3.0 - i * .5) / .3))
-        if k <= 0:
-            continue
-        col = (240, 140, 70) if i % 3 else (240, 70, 60)
-        glow(img, (x, y), 22, tuple(int(c * .55) for c in col), k)
-        d.ellipse([x - 9, y - 9, x + 9, y + 9], fill=tuple(int(c * k) for c in col), outline=INK, width=3)
-    # Илья спиной/в профиль в углу кадра
+    for i, (x, sc, off) in enumerate(FAR):
+        k = 1 - min(1, max(0, (t - off) / .35))          # свет
+        fade = 1 - min(1, max(0, (t - off - .3) / .9))   # силуэт
+        if k > 0:
+            paste_platform(img, x, 704, sc, lit=True, light_k=k * (.85 + .15 * math.sin(t * 5 + i)))
+        else:
+            paste_platform(img, x, 704, sc, lit=False, alpha=.12 + .88 * fade)
     toon(img, 590, 1620, 1.05, "ilya", "worried" if t > 4 else "neutral", ("down", "down"), (-.8, -.3), t, legs=False)
     SNOW.draw(img, t)
     return zoom(img, 1.06 - .05 * t / L, .5, .5)
@@ -636,7 +762,15 @@ def s10(t, L):
     return zoom(shake(img, t, 5), 1.06, .5, .6)
 
 
-STEPS = [(330 + 40 * math.sin(k * .5) + (26 if k % 2 else -26), 1220 - k * 66) for k in range(14)]
+def _path_x(k):
+    return 330 + 40 * math.sin(k * .5)
+
+
+STEPS = []
+for _k in range(11):
+    _ang = math.atan2(40 * .5 * math.cos(_k * .5), 78) * -1
+    _side = 1 if _k % 2 else -1
+    STEPS.append((_path_x(_k) + _side * 24 * math.cos(_ang), 1200 - _k * 78, _ang, _k % 2 == 0))
 
 
 def s11(t, L):
@@ -647,15 +781,12 @@ def s11(t, L):
     d.rectangle([230, 90, 490, 420], fill=(176, 176, 182), outline=INK, width=8)
     gap = 22 + 6 * math.sin(t * 2)
     d.rectangle([360 - gap / 2, 104, 360 + gap / 2, 414], fill=(255, 210, 120))
-    for i, (x, y) in enumerate(STEPS):
-        s = .6 + .4 * y / H
-        d.ellipse([x - 22 * s, y - 36 * s, x + 22 * s, y + 18 * s], fill=(38, 52, 70), outline=INK, width=4)
-        d.ellipse([x - 17 * s, y + 24 * s, x + 17 * s, y + 46 * s], fill=(38, 52, 70), outline=INK, width=4)
-        d.ellipse([x - 8 * s, y - 28 * s, x, y - 18 * s], fill=(150, 190, 220))
+    for (x, y, ang, left) in STEPS:
+        boot_print(d, x, y, .7 + .45 * y / H, ang, left)
     dark = Image.eval(base, lambda v: int(v * .32))
     p = min(1, t / (L * .8))
     ty = 1240 - p * 1000
-    tx = 330 + 40 * math.sin((1220 - ty) / 66 * .5)
+    tx = _path_x((1200 - ty) / 78)
     m = Image.new("L", (W, H)); md = ImageDraw.Draw(m)
     md.polygon([(W / 2 - 40, H + 40), (W / 2 + 40, H + 40), (tx + 170, ty - 100), (tx - 170, ty - 100)], fill=255)
     md.ellipse([tx - 190, ty - 200, tx + 190, ty + 140], fill=255)
@@ -691,7 +822,9 @@ def s12(t, L):
         d.polygon([(k, 340), (k + 32, 340), (k + 12, 380), (k - 20, 380)], fill=YELLOW)
     d.line([0, 380, W, 380], fill=INK, width=8)
     # мокрый след у самого края
-    d.ellipse([320, 280, 364, 334], fill=(38, 52, 70), outline=INK, width=4)
+    boot_print(d, 330, 330, .85, 0, True)
+    boot_print(d, 380, 240, .85, .05, False)
+    boot_print(d, 336, 150, .85, 0, True)
     img = zoom(img, 1 + .12 * tt / (L - half), .5, .7)
     fade = max(0, (t - (L - 1.6)) / 1.2)
     if fade:

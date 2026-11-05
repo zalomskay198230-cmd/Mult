@@ -700,6 +700,51 @@ def puddle(img, t, x0, x1, y1, grow):
 
 
 
+# ---------- решётка у воды ----------
+ICE = (214, 234, 246)
+STEEL = (70, 76, 88)
+
+
+def grating(img, y0, t, waves=True, base=True):
+    d = ImageDraw.Draw(img)
+    if not base:
+        return wave_over(img, y0, t)
+    d.rectangle([0, y0, W, H], fill=(44, 50, 62))
+    for x in range(-40, W + 40, 34):
+        d.line([x, y0, x + 60, H], fill=STEEL, width=8)
+    for y in range(int(y0), H, 34):
+        d.line([0, y, W, y], fill=STEEL, width=8)
+    rnd = random.Random(3)
+    for _ in range(18):   # наледь
+        x, y = rnd.uniform(0, W), rnd.uniform(y0, H)
+        w, h = rnd.uniform(24, 70), rnd.uniform(8, 22)
+        d.ellipse([x - w, y - h, x + w, y + h], fill=ICE, outline=INK, width=3)
+    d.line([0, y0, W, y0], fill=INK, width=7)
+    # перила со льдом и сосульками
+    d.line([0, y0 - 150, W, y0 - 150], fill=(226, 110, 40), width=9)
+    for x in range(30, W, 140):
+        d.line([x, y0 - 150, x, y0], fill=(226, 110, 40), width=9)
+    for x in range(10, W, 46):
+        l = 20 + (x * 7) % 40
+        d.polygon([(x - 7, y0 - 146), (x + 7, y0 - 146), (x, y0 - 146 + l)], fill=ICE, outline=INK)
+    if waves:
+        wave_over(img, y0, t)
+
+
+def wave_over(img, y0, t):
+    if True:   # волна перехлёстывает
+        ph = (t * .45) % 1
+        if ph < .5:
+            a = math.sin(ph / .5 * math.pi)
+            lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            ld = ImageDraw.Draw(lay)
+            top = y0 - 120 * a
+            pts = [(0, H)] + [(x, top + 30 * math.sin(x * .03 + t * 4)) for x in range(0, W + 10, 12)] + [(W, H)]
+            ld.polygon(pts, fill=(220, 236, 246, int(150 * a)))
+            img.paste(Image.alpha_composite(img.convert("RGBA"), lay).convert("RGB"))
+
+
+
 def title(t, L, n):
     img = Image.new("RGB", (W, H), SEA)
     d = ImageDraw.Draw(img)

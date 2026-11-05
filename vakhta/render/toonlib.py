@@ -138,6 +138,8 @@ def glow(img, xy, r, color, k=1.0):
 
 
 def zoom(img, z, cx=0.5, cy=0.5):
+    z = max(z, 1.0)
+    cx, cy = min(max(cx, 0.0), 1.0), min(max(cy, 0.0), 1.0)
     if abs(z - 1) < 1e-3:
         return img
     w, h = W / z, H / z

@@ -59,49 +59,50 @@ def note(d, x, y, txt, size=24):
     d.text((x, y), txt, font=f, fill=(244, 244, 240), stroke_width=3, stroke_fill=INK)
 
 
-sheet = Image.new("RGB", (SW, SH))
-bg = bg_city(SW, SH)
-sheet.paste(bg)
-d = ImageDraw.Draw(sheet)
-
-# --- панель 1: в полный рост ---
-toon(sheet, 360, 1180, 1.25, "kurer", "neutral", ("down", "down"), (0, 0), 0.5)
-d = ImageDraw.Draw(sheet)
-label(d, 360, 40, "МАКС", 80)
-label(d, 360, 140, "курьер · 26 лет", 32, (244, 244, 240))
-
-# --- панель 2: мимика ---
-d.rectangle([740, 30, 1420, 1250], fill=None, outline=(240, 240, 236), width=0)
-for i, (face, look, cap) in enumerate((("neutral", (0, 0), "спокоен"), ("smile", (0, 0), "сделка"),
-                                        ("worried", (.6, -.3), "что-то не так"), ("shock", (0, 0), "беги"))):
-    cx, cy = 900 + (i % 2) * 360, 330 + (i // 2) * 520
-    pane = Image.new("RGB", (330, 470), (0, 0, 0))
-    pane.paste(bg.crop((cx - 165, cy - 235, cx + 165, cy + 235)))
-    pane = Image.eval(pane, lambda v: int(v * .8))
-    toon(pane, 165, 900, 1.15, "kurer", face, ("down", "down"), look, 1.0, blink=False)
-    sheet.paste(pane, (cx - 165, cy - 235))
+if __name__ == "__main__":
+    sheet = Image.new("RGB", (SW, SH))
+    bg = bg_city(SW, SH)
+    sheet.paste(bg)
     d = ImageDraw.Draw(sheet)
-    d.rectangle([cx - 165, cy - 235, cx + 165, cy + 235], outline=INK, width=6)
-    label(d, cx, cy + 180, cap, 32)
 
-# --- панель 3: в деле + снаряжение ---
-hands = toon(sheet, 1720, 1180, 1.0, "kurer", "smile", ("front", "point"), (1, 0), 0.5)
-d = ImageDraw.Draw(sheet)
-hx, hy = hands[1]
-parcel(d, hx + 70, hy - 10, .9)
-hand(d, (hx, hy), 1.0)
-label(d, 1790, 40, "СНАРЯЖЕНИЕ", 50)
-items = [
-    (1960, 150, "гогглы — от пыли и пепла"),
-    (1960, 205, "респиратор на лямке"),
-    (1960, 260, "термо-рюкзак: любой груз"),
-    (1960, 315, "бандана, пластырь, шрам"),
-    (1960, 370, "оплата: патроны, лекарства,"),
-    (1960, 410, "  батарейки, информация"),
-]
-for x, y, t in items:
-    note(d, 1500, y, "• " + t, 26)
+    # --- панель 1: в полный рост ---
+    toon(sheet, 360, 1180, 1.25, "kurer", "neutral", ("down", "down"), (0, 0), 0.5)
+    d = ImageDraw.Draw(sheet)
+    label(d, 360, 40, "МАКС", 80)
+    label(d, 360, 140, "курьер · 26 лет", 32, (244, 244, 240))
 
-sheet = grade_sheet = Image.fromarray(np.clip(np.asarray(sheet).astype(np.float32) * 1.0, 0, 255).astype(np.uint8))
-sheet.save(OUT)
-print("готово:", OUT)
+    # --- панель 2: мимика ---
+    d.rectangle([740, 30, 1420, 1250], fill=None, outline=(240, 240, 236), width=0)
+    for i, (face, look, cap) in enumerate((("neutral", (0, 0), "спокоен"), ("smile", (0, 0), "сделка"),
+                                            ("worried", (.6, -.3), "что-то не так"), ("shock", (0, 0), "беги"))):
+        cx, cy = 900 + (i % 2) * 360, 330 + (i // 2) * 520
+        pane = Image.new("RGB", (330, 470), (0, 0, 0))
+        pane.paste(bg.crop((cx - 165, cy - 235, cx + 165, cy + 235)))
+        pane = Image.eval(pane, lambda v: int(v * .8))
+        toon(pane, 165, 900, 1.15, "kurer", face, ("down", "down"), look, 1.0, blink=False)
+        sheet.paste(pane, (cx - 165, cy - 235))
+        d = ImageDraw.Draw(sheet)
+        d.rectangle([cx - 165, cy - 235, cx + 165, cy + 235], outline=INK, width=6)
+        label(d, cx, cy + 180, cap, 32)
+
+    # --- панель 3: в деле + снаряжение ---
+    hands = toon(sheet, 1720, 1180, 1.0, "kurer", "smile", ("front", "point"), (1, 0), 0.5)
+    d = ImageDraw.Draw(sheet)
+    hx, hy = hands[1]
+    parcel(d, hx + 70, hy - 10, .9)
+    hand(d, (hx, hy), 1.0)
+    label(d, 1790, 40, "СНАРЯЖЕНИЕ", 50)
+    items = [
+        (1960, 150, "гогглы — от пыли и пепла"),
+        (1960, 205, "респиратор на лямке"),
+        (1960, 260, "термо-рюкзак: любой груз"),
+        (1960, 315, "бандана, пластырь, шрам"),
+        (1960, 370, "оплата: патроны, лекарства,"),
+        (1960, 410, "  батарейки, информация"),
+    ]
+    for x, y, t in items:
+        note(d, 1500, y, "• " + t, 26)
+
+    sheet = grade_sheet = Image.fromarray(np.clip(np.asarray(sheet).astype(np.float32) * 1.0, 0, 255).astype(np.uint8))
+    sheet.save(OUT)
+    print("готово:", OUT)

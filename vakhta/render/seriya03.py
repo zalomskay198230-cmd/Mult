@@ -31,30 +31,6 @@ CORR = ("corr_bg", (140, 144, 150), (100, 104, 110))
 FLICK0, FLICK1 = 1.3, 3.3   # мигание света в s09 (локальное время)
 
 
-def title(t, L, n):
-    img = Image.new("RGB", (W, H), SEA)
-    d = ImageDraw.Draw(img)
-    rnd = random.Random(1)
-    for i in range(70):
-        x0, y0 = rnd.uniform(0, W), rnd.uniform(0, H)
-        x = (x0 + 30 * t) % W
-        d.line([x, y0, x + 40, y0], fill=(70, 84, 104), width=5)
-    platform_top(img, W / 2 + 30, H / 2 + 120, 1.0, t)
-    SNOW.draw(img, t)
-    img = zoom(img, 1.12 - .1 * t / L)
-    d = ImageDraw.Draw(img)
-    a = min(1, max(0, (t - .3) / .5))
-    f = ImageFont.truetype(FONT_SUB, 140)
-    tw = f.getlength("ВАХТА")
-    mask = Image.new("L", (W, H)); ImageDraw.Draw(mask).text(((W - tw) / 2, 170), "ВАХТА", font=f, fill=int(255 * a), stroke_width=12)
-    img.paste(Image.new("RGB", (W, H), (200, 170, 50)), (0, 0), mask.filter(ImageFilter.GaussianBlur(16)).point(lambda v: int(v * .6)))
-    d.text(((W - tw) / 2, 170), "ВАХТА", font=f, fill=tuple(int(c * a) for c in YELLOW), stroke_width=5, stroke_fill=(58, 50, 14))
-    f2 = ImageFont.truetype(FONT_SUB, 46)
-    txt = f"серия {n}"
-    d.text(((W - f2.getlength(txt)) / 2, 340), txt, font=f2, fill=(int(255 * a),) * 3, stroke_width=4, stroke_fill=INK)
-    return img
-
-
 def s01(t, L):
     return title(t, L, 3)
 

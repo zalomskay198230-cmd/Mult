@@ -1,0 +1,88 @@
+{
+ "scenes": [
+  {
+   "name": "e2_s01",
+   "start": 0.0,
+   "length": 6.946,
+   "cue_start": 0.0,
+   "cue_dur": 6.696
+  },
+  {
+   "name": "e2_s02",
+   "start": 6.946,
+   "length": 6.468,
+   "cue_start": 0.05,
+   "cue_dur": 6.168
+  },
+  {
+   "name": "e2_s03",
+   "start": 13.414,
+   "length": 6.803999999999999,
+   "cue_start": 0.05,
+   "cue_dur": 6.504
+  },
+  {
+   "name": "e2_s04",
+   "start": 20.218,
+   "length": 5.46,
+   "cue_start": 0.05,
+   "cue_dur": 5.16
+  },
+  {
+   "name": "e2_s05",
+   "start": 25.678,
+   "length": 7.116,
+   "cue_start": 0.05,
+   "cue_dur": 6.816
+  },
+  {
+   "name": "e2_s06",
+   "start": 32.794,
+   "length": 7.74,
+   "cue_start": 0.05,
+   "cue_dur": 7.44
+  },
+  {
+   "name": "e2_s07m",
+   "start": 40.534,
+   "length": 9.444,
+   "cue_start": 0.05,
+   "cue_dur": 9.144
+  },
+  {
+   "name": "e2_s08",
+   "start": 49.978,
+   "length": 4.284,
+   "cue_start": 0.05,
+   "cue_dur": 3.984
+  },
+  {
+   "name": "e2_s09",
+   "start": 54.262,
+   "length": 8.196,
+   "cue_start": 0.05,
+   "cue_dur": 7.896
+  },
+  {
+   "name": "e2_s10",
+   "start": 62.458,
+   "length": 3.804,
+   "cue_start": 0.05,
+   "cue_dur": 3.504
+  },
+  {
+   "name": "e2_s11",
+   "start": 66.262,
+   "length": 4.9559999999999995,
+   "cue_start": 0.05,
+   "cue_dur": 4.656
+  },
+  {
+   "name": "e2_s12",
+   "start": 71.218,
+   "length": 4.412,
+   "cue_start": 0.3,
+   "cue_dur": 1.512
+  }
+ ]
+}

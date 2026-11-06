@@ -5,6 +5,8 @@
 import os, sys, math, random
 HERE = os.path.dirname(os.path.abspath(__file__))
 TTS2 = sys.argv[1] if len(sys.argv) > 1 else "../tts/s02"
+sys.path.insert(0, os.path.join(HERE, "..", "..", "vakhta", "render"))
+sys.path.insert(0, HERE)   # свой seriya01 (не «Вахты»)
 import toonlib
 toonlib.TTS = os.path.join(HERE, "..", "tts", "s01")   # seriya01 строит свой таймлайн при импорте
 import seriya01 as E

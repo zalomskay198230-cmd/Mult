@@ -3,7 +3,7 @@
 поверх — телефон-вставки, субтитры, счётчик и плашки из 2D-версии.
 Запуск: python3 seriya01_3d.py ../tts/s01 ../seriya01_3d.mp4"""
 import os, math
-from PIL import Image
+from PIL import Image, ImageEnhance
 import seriya01 as E
 from toonlib import *
 
@@ -21,7 +21,9 @@ def bg(name, t):
     if path not in _cache:
         if len(_cache) > 40:
             _cache.clear()
-        _cache[path] = Image.open(path).convert("RGB").resize((W, H), Image.LANCZOS)
+        im = Image.open(path).convert("RGB").resize((W, H), Image.LANCZOS)
+        im = ImageEnhance.Brightness(im).enhance(1.45 if name not in ("s03", "s04", "s05") else 1.1)
+        _cache[path] = ImageEnhance.Contrast(im).enhance(1.08)
     return _cache[path].copy()
 
 

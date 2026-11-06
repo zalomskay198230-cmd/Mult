@@ -321,9 +321,13 @@ def s12(t, L, cue):   # дверь открыта, в проёме — чужо�
         img = Image.blend(img, Image.new("RGB", (W, H)), a)
         if a >= 1:
             dd = ImageDraw.Draw(img)
-            f3 = F(60, FONT_SUB)
-            for j, line in enumerate(("серия 3", "скоро")):
-                dd.text(((W - f3.getlength(line)) / 2, 520 + j * 80), line, font=f3, fill=YELLOW, stroke_width=4, stroke_fill=(58, 50, 14))
+            f3, f4 = F(54, FONT_SUB), F(76, FONT_SUB)
+            for j, line in enumerate(("заключительная", "часть")):
+                dd.text(((W - f3.getlength(line)) / 2, 440 + j * 70), line, font=f3, fill=(240, 240, 244), stroke_width=4, stroke_fill=INK)
+            pop = 1 + .06 * math.sin((t - vo_end) * 8)   # пульсирующее «100 лайков»
+            f4 = F(int(76 * pop), FONT_SUB)
+            for j, line in enumerate(("после", "100 ♥")):
+                dd.text(((W - f4.getlength(line)) / 2, 620 + j * 96), line, font=f4, fill=YELLOW if j == 0 else (240, 70, 80), stroke_width=5, stroke_fill=(58, 50, 14))
     return img
 
 

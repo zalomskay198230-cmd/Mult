@@ -11,6 +11,7 @@ OUTDIR = argv[1]
 WANT = None if argv[2] == "all" else set(argv[2].split(","))
 SAMPLES = int(argv[3]) if len(argv) > 3 else 16
 SCALE = float(argv[4]) if len(argv) > 4 else .75
+BG_ONLY = len(argv) > 5 and argv[5] == "bg"   # только фон: без Дениса, широкий план
 FPS3D = 12
 os.makedirs(OUTDIR, exist_ok=True)
 
@@ -571,11 +572,26 @@ r.resolution_x, r.resolution_y = 720, 1280
 r.resolution_percentage = int(SCALE * 100)
 S.view_settings.view_transform = "AgX"
 
+if BG_ONLY:
+    CH.hide_render = True
+    _cam = cam
+
+    def cam(loc, look_at, lens=40):   # широкий план, чтобы был виден пол под 2D-героем
+        if abs(loc[1]) < 3.6 and lens >= 34 and loc[2] > .95 and look_at[1] == 0:
+            _cam((loc[0] + .15, -3.6, 1.15), (look_at[0] + .15, 0, .95), 34)
+        else:
+            _cam(loc, look_at, lens)
+    for k in list(SC):
+        SC[k].__globals__["cam"] = cam
+MOVING = {"s01", "s11"}   # сцены, где камера едет за героем
+
 for sc in TL["scenes"]:
     name, L = sc["name"], sc["length"]
     if WANT and name not in WANT:
         continue
     n = int(math.ceil(L * FPS3D))
+    if BG_ONLY and name not in MOVING:
+        n = 1
     for f in range(n):
         out = os.path.join(OUTDIR, f"{name}_{f:04d}.png")
         if os.path.exists(out):
@@ -584,6 +600,8 @@ for sc in TL["scenes"]:
         # прогресс реплики (для сцен, где действие привязано к словам)
         p = (t - sc["cue_start"]) / sc["cue_dur"] if sc["cue_dur"] else t / L
         PHONE.parent = ROOT
+        if BG_ONLY:
+            PHL.data.energy = 0
         fn = SC[name]
         if fn.__code__.co_argcount == 3:
             fn(t, L, p)

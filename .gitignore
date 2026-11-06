@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 million/render3d/frames/
 *.mp4.wav
+million/render3d/frames_bg/

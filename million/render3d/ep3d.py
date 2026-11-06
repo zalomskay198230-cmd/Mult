@@ -561,6 +561,96 @@ def sc_s13(t, L, p):
 
 SC = {n: globals()["sc_" + n] for n in ["s01", "s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09", "s10", "s11", "s12", "s13"]}
 
+
+# ======================= Серия 2: новые декорации и сцены =======================
+def set_zhk():
+    c = new_coll("zhk")
+    bpy.ops.mesh.primitive_plane_add(size=80, location=(0, 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("zhk_ground", srgb(44, 46, 54), .2))
+    rnd = random.Random(11)
+    LIT = mat("zhk_lit", (0, 0, 0), .2, emit=srgb(255, 214, 150), strength=5)
+    DARK = mat("zhk_dark", srgb(40, 46, 60), .3)
+    for k in range(-6, 7):   # современные башни
+        h = rnd.uniform(14, 24)
+        x = k * 6
+        box("tw", (x, 14, h / 2), (5, 4, h), mat(f"tw{k}", srgb(150 + k % 2 * 20, 156, 170), .7), 0, coll=c)
+        for row in range(int(h / 1.1)):
+            for col in range(4):
+                box("tww", (x - 1.8 + col * 1.2, 11.98, 1 + row * 1.1), (.7, .02, .6), LIT if rnd.random() < .3 else DARK, 0, coll=c)
+    FENCE = mat("fence", srgb(30, 30, 34), .4, metal=.6)
+    for k in range(-40, 41):   # забор из прутьев
+        box("rod", (k * .5, 4, .9), (.04, .04, 1.8), FENCE, 0, coll=c)
+    box("rail", (0, 4, 1.75), (40, .06, .06), FENCE, 0, coll=c)
+    box("booth", (2.2, 3.6, 1.2), (1.4, 1.4, 2.4), mat("booth", srgb(200, 204, 210), .5), .05, coll=c)
+    box("booth_win", (2.2, 2.89, 1.5), (1.0, .02, .7), mat("bwin", (0, 0, 0), .2, emit=srgb(255, 230, 170), strength=4), 0, coll=c)
+    box("turnstile", (.6, 4, .55), (.8, .3, 1.1), FENCE, .1, coll=c)
+    box("gate_led", (.6, 3.84, 1.02), (.12, .02, .08), mat("led", (0, 0, 0), .2, emit=(1, .05, .05), strength=8), 0, coll=c)
+    LAMP = mat("zlamp", (0, 0, 0), .2, emit=srgb(255, 220, 160), strength=10)
+    for k in range(-6, 7):
+        box("zpost", (k * 4 + 1, 2.4, 1.6), (.07, .07, 3.2), FENCE, 0, coll=c)
+        sphere("zbulb", (k * 4 + 1, 2.4, 3.25), (.14, .14, .14), LAMP, coll=c)
+    return c
+
+
+def set_corridor():
+    c = new_coll("corridor")
+    bpy.ops.mesh.primitive_plane_add(size=60, location=(0, 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("cfloor", srgb(150, 130, 110), .4))
+    bpy.ops.mesh.primitive_plane_add(size=60, location=(0, 1.2, 3), rotation=(math.radians(90), 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("cwall", srgb(214, 206, 190), .9))
+    DOOR = mat("cdoor", srgb(70, 50, 40), .5)
+    for k in range(-8, 9):
+        box("cdoor", (k * 2.4, 1.17, 1.05), (.95, .05, 2.1), DOOR, .03, coll=c)
+        box("cplate", (k * 2.4, 1.13, 1.75), (.2, .02, .12), mat("plate", srgb(210, 180, 100), .3, metal=.7), .1, coll=c)
+    LAMPM = mat("clamp", (0, 0, 0), .2, emit=srgb(255, 240, 210), strength=6)
+    for k in range(-8, 9):
+        box("clamp", (k * 2.4 + 1.2, .6, 2.75), (.5, .2, .05), LAMPM, .1, coll=c)
+    # приоткрытая дверь кв. 147 (k=0) — отдельно, с проёмом света
+    open_door = box("door147", (-.35, .8, 1.05), (.95, .05, 2.1), DOOR, .03, rot=(0, 0, math.radians(-70)), coll=c)
+    gap = box("doorlight", (0, 1.25, 1.05), (.92, .02, 2.05), mat("dl", (0, 0, 0), .2, emit=srgb(255, 236, 200), strength=12), 0, coll=c)
+    open_door.hide_render = gap.hide_render = True
+    SETS["door_open"] = (open_door, gap)
+    return c
+
+
+SETS["zhk"] = set_zhk()
+SETS["corridor"] = set_corridor()
+_door_open, _door_light = SETS.pop("door_open")
+
+
+def door(opened):
+    _door_open.hide_render = _door_light.hide_render = not opened
+
+
+def e2_track(t, speed, set_name, start=0.0, cam_y=-3.6, look_z=.95, fill=160, rim=260, day=False):
+    show_set(set_name); lighting(day=day, rim=rim, fill=fill)
+    x = start + t * speed
+    FILL.location = (x - 1.5, -2, 3); RIMl.location = (x + 1.6, 1.0, 2.2)
+    cam((x + .15, cam_y, 1.15), (x + .15, .01, look_z), 34)
+
+
+def e2_static(set_name, loc, look, lens=34, fill=160, rim=260, day=False):
+    show_set(set_name); lighting(day=day, rim=rim, fill=fill)
+    FILL.location = (-1.2, -1.6, 2.6); RIMl.location = (1.4, .6, 2.0)
+    cam(loc, look, lens)
+
+
+def e2_s01(t, L): door(False); e2_track(t, 1.3, "zhk", -6)
+def e2_s02(t, L): door(False); e2_static("zhk", (-.4, -2.4, 1.2), (.6, 4, 1.4), 30)
+def e2_s03(t, L): door(False); e2_track(t, 1.3, "street", 10)
+def e2_s04(t, L): door(False); e2_static("zhk", (.9, -1.6, 1.3), (1.8, 4, 1.4), 30)
+def e2_s05(t, L): door(False); e2_track(t, 4.2, "street", 30, fill=220, rim=420)
+def e2_s06(t, L): door(False); e2_static("street", (5.0, -3.6, 1.15), (5.0, .01, .95))
+def e2_s07m(t, L): door(False); e2_static("room", (.4, -3.6, 1.15), (.4, .01, .95))
+def e2_s08(t, L): door(False); e2_static("street", (-6.0, -3.6, 1.15), (-6.0, .01, .95))
+def e2_s09(t, L): door(False); e2_static("zhk", (-3.0, -3.6, 1.15), (-3.0, .01, 1.1))
+def e2_s10(t, L): door(False); e2_static("zhk", (-3.0, -3.0, 1.2), (-3.0, .01, 1.2))
+def e2_s11(t, L): door(False); e2_track(t, 1.3, "corridor", -6, day=True, fill=120, rim=120)
+def e2_s12(t, L): door(True); e2_static("corridor", (.6, -3.2, 1.15), (.2, .01, 1.0), day=True, fill=120, rim=120)
+
+
+SC.update({n: globals()[n] for n in ["e2_s01", "e2_s02", "e2_s03", "e2_s04", "e2_s05", "e2_s06", "e2_s07m", "e2_s08", "e2_s09", "e2_s10", "e2_s11", "e2_s12"]})
+
 r = S.render
 r.engine = "CYCLES"
 S.cycles.device = "CPU"
@@ -583,7 +673,7 @@ if BG_ONLY:
             _cam(loc, look_at, lens)
     for k in list(SC):
         SC[k].__globals__["cam"] = cam
-MOVING = {"s01", "s11"}   # сцены, где камера едет за героем
+MOVING = {"s01", "s11", "e2_s01", "e2_s03", "e2_s05", "e2_s11"}   # сцены, где камера едет за героем
 
 for sc in TL["scenes"]:
     name, L = sc["name"], sc["length"]

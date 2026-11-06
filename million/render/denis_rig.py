@@ -13,6 +13,14 @@ JEANS, JEANS_SH = C["pants"], person.dk(C["pants"], .7)
 SHOE = C["shoes"]
 HAIR, HAIR_SH = C["hair"], person.dk(C["hair"], .62)
 GROUND = 962
+BASE_TOP, BASE_TOP_SH = TOP, TOP_SH
+KUR_TOP, KUR_TOP_SH = (236, 172, 44), (186, 128, 26)      # жёлтая куртка курьера
+BAG, BAG_SH = (44, 150, 112), (28, 104, 76)                # термо-рюкзак
+
+
+def outfit(courier):
+    global TOP, TOP_SH
+    TOP, TOP_SH = (KUR_TOP, KUR_TOP_SH) if courier else (BASE_TOP, BASE_TOP_SH)
 
 
 def lerp(a, b, k):
@@ -49,7 +57,7 @@ def draw_arm(p, sx, pose, holding_phone=False):
     return wr
 
 
-def front(size, ox, ground, s, t, arms=("down", "down"), legs="idle", expr="neutral", look=(0, 0), jump=0.0, phone_hand=None, head_tilt=0.0):
+def front(size, ox, ground, s, t, arms=("down", "down"), legs="idle", expr="neutral", look=(0, 0), jump=0.0, phone_hand=None, head_tilt=0.0, courier=False):
     """arms: позы (левая, правая) — имя из ARM или ((x,y),(x,y)); legs: idle | walk | jump.
     phone_hand: 'r' или 'l' — в какой руке телефон."""
     p = Pen(size, ox, 0, s)
@@ -60,6 +68,11 @@ def front(size, ox, ground, s, t, arms=("down", "down"), legs="idle", expr="neut
         lifts = [max(0, math.sin(ph)), max(0, math.sin(ph + math.pi))]
         bob = -7 * abs(math.cos(ph))
     p.oy = ground - GROUND * s + bob * s - jump * s
+    outfit(courier)
+    if courier:   # рюкзак за спиной: видны края над плечами и по бокам
+        bag = [(-128, 170), (128, 170), (132, 480), (-132, 480)]
+        p.shape(bag, BAG, smooth=False)
+        p.shade(bag, [(-140, 160), (-40, 160), (-50, 490), (-140, 490)], BAG_SH, 255, smooth_shade=False)
     # ноги
     for i, sx in enumerate((-1, 1)):
         L = lifts[i]
@@ -92,6 +105,11 @@ def front(size, ox, ground, s, t, arms=("down", "down"), legs="idle", expr="neut
     for sx in (-1, 1):
         p.curve([(sx * 16, 236), (sx * 18, 290), (sx * 14, 310)], col=(220, 220, 216), lw=2.4)
     p.shape([(-92, 506), (92, 506), (90, 528), (-90, 528)], person.dk(TOP, .8), lw=1.4, smooth=False)
+    if courier:   # светоотражающие полосы и лямки
+        for y in (330, 440):
+            p.shape([(-100, y), (100, y), (98, y + 16), (-98, y + 16)], (214, 218, 222), line=False, smooth=False)
+        for sx in (-1, 1):
+            p.shape([(sx * 44, 182), (sx * 64, 184), (sx * 60, 470), (sx * 42, 470)], (44, 46, 52), lw=1.4, smooth=False)
     neck = [(-22, 136), (22, 136), (24, 192), (-24, 192)]
     p.shape(neck, SKIN, smooth=False)
     # руки перед грудью
@@ -130,7 +148,7 @@ def side_head(p, expr="neutral"):
     p.shade(hair, [(-80, -40), (0, -40), (-10, 120), (-80, 120)], HAIR_SH, 255, soft=3)
 
 
-def side(size, ox, ground, s, t, mode="run", expr="tense", hood_up=False):
+def side(size, ox, ground, s, t, mode="run", expr="tense", hood_up=False, courier=False):
     f = 1.0 if mode == "walk" else 1.6
     ph = 2 * math.pi * f * t
     near, far = rig.cycle(mode, ph), rig.cycle(mode, ph + math.pi)
@@ -141,6 +159,7 @@ def side(size, ox, ground, s, t, mode="run", expr="tense", hood_up=False):
     if mode == "run":
         lift -= 16 * abs(math.sin(ph))
     p = Pen(size, ox, ground - GROUND * s + lift * s, s)
+    outfit(courier)
     lean = .16 if mode == "run" else .04
     U = lambda pt: (pt[0] + lean * (rig.HIP_Y - pt[1]), pt[1])
     shoulder = (0, rig.SH_Y)
@@ -153,6 +172,11 @@ def side(size, ox, ground, s, t, mode="run", expr="tense", hood_up=False):
     p.shape(torso, TOP)
     p.shade(torso, [U(pt) for pt in [(-60, 170), (-10, 170), (-14, 540), (-60, 540)]], TOP_SH)
     p.shape([U(pt) for pt in [(-50, 190), (-20, 176), (-10, 230), (-46, 250)]], person.dk(TOP, .85), lw=1.6)   # капюшон на спине
+    if courier:   # рюкзак на спине
+        bag = [U(pt) for pt in [(-44, 176), (-150, 182), (-154, 470), (-44, 474)]]
+        p.shape(bag, BAG, smooth=False)
+        p.shade(bag, [U(pt) for pt in [(-170, 160), (-110, 160), (-110, 490), (-170, 490)]], BAG_SH, smooth_shade=False)
+        p.curve([U((-42, 196)), U((-34, 360)), U((-38, 470))], col=(44, 46, 52), lw=12)
     rig.limb(p, [hip, kn_n, an_n], [74, 60, 46], JEANS, dark=JEANS_SH)
     rig.boot(p, an_n, max(-10, min(30, -(near[0] - near[1]) * .5)), col=SHOE)
     hx = 10 + lean * (rig.HIP_Y - 186)

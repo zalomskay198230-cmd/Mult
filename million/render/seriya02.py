@@ -140,7 +140,18 @@ def ui_gate(t, L, cue=None):
 
 
 def ui_mama(t, L, cue=None):
-    return E.old_s07(t, L, {"07": -99})
+    """экран звонка мамы из 1-й серии (длительности берём из озвучки 1-й серии)"""
+    old = toonlib.TTS
+    toonlib.TTS = os.path.join(HERE, "..", "tts", "s01")
+    try:
+        g = E.old_s07.__globals__
+        z, sh = g["zoom"], g["shake"]
+        g["zoom"] = lambda im, *a, **k: im
+        g["shake"] = lambda im, *a, **k: im
+        return E.old_s07(t, L, {"07": -99})
+    finally:
+        g["zoom"], g["shake"] = z, sh
+        toonlib.TTS = old
 
 
 def panel(img, fn, t, L, cue=None, pos=(400, 150), w=290, t0=0.0, tilt=-4):
@@ -226,10 +237,10 @@ def s06(t, L, cue):
     img = bg("s06", t)
     p = (t - cue["06"]) / dur("06.mp3")
     picked = p > .8
-    img = char(img, DR.front((W, H), 220, GY, .8, t, ("down", "ear" if picked else "phone"), "worried", (.6, -.6),
+    img = char(img, DR.front((W, H), 220, GY, .8, t, ("down", "ear" if picked else "phone"), "idle", "worried", (.6, -.6),
                              phone_hand="r", courier=True), "s06")
     if not picked:
-        img = panel(img, E.old_s07, t, L, {"07": -99}, pos=(430, 150), w=260)
+        img = panel(img, ui_mama, t, L, None, pos=(430, 150), w=260)
     counter(img, 1247)
     return img
 

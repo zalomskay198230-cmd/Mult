@@ -1,0 +1,95 @@
+{
+ "scenes": [
+  {
+   "name": "s01",
+   "start": 0.0,
+   "length": 4.882,
+   "cue_start": 0.0,
+   "cue_dur": 4.632
+  },
+  {
+   "name": "s02",
+   "start": 4.882,
+   "length": 2.988,
+   "cue_start": 0.05,
+   "cue_dur": 2.688
+  },
+  {
+   "name": "s03",
+   "start": 7.869999999999999,
+   "length": 3.6359999999999997,
+   "cue_start": 0.05,
+   "cue_dur": 3.336
+  },
+  {
+   "name": "s04",
+   "start": 11.505999999999998,
+   "length": 3.876,
+   "cue_start": 0.05,
+   "cue_dur": 3.576
+  },
+  {
+   "name": "s05",
+   "start": 15.381999999999998,
+   "length": 4.859999999999999,
+   "cue_start": 0.05,
+   "cue_dur": 4.56
+  },
+  {
+   "name": "s06",
+   "start": 20.241999999999997,
+   "length": 4.74,
+   "cue_start": 0.05,
+   "cue_dur": 4.44
+  },
+  {
+   "name": "s07",
+   "start": 24.982,
+   "length": 5.46,
+   "cue_start": 0.05,
+   "cue_dur": 5.16
+  },
+  {
+   "name": "s08",
+   "start": 30.442,
+   "length": 4.9559999999999995,
+   "cue_start": 0.05,
+   "cue_dur": 4.656
+  },
+  {
+   "name": "s09",
+   "start": 35.397999999999996,
+   "length": 2.868,
+   "cue_start": 0.05,
+   "cue_dur": 2.568
+  },
+  {
+   "name": "s10",
+   "start": 38.266,
+   "length": 4.212,
+   "cue_start": 0.05,
+   "cue_dur": 3.912
+  },
+  {
+   "name": "s11",
+   "start": 42.477999999999994,
+   "length": 4.859999999999999,
+   "cue_start": 0.05,
+   "cue_dur": 4.56
+  },
+  {
+   "name": "s12",
+   "start": 47.337999999999994,
+   "length": 3.948,
+   "cue_start": 0.05,
+   "cue_dur": 3.648
+  },
+  {
+   "name": "s13",
+   "start": 51.285999999999994,
+   "length": 7.074,
+   "cue_start": 0.05,
+   "cue_dur": 4.824
+  }
+ ]
+}

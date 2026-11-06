@@ -53,7 +53,7 @@ def hand_at(p, w, ang=0, dark=False):
     p.ellipse(w[0], w[1] + 14, 15, 20, c, lw=2.2)
 
 
-def boot(p, ankle, foot_ang, facing=1, dark=False, scale=1.0):
+def boot(p, ankle, foot_ang, facing=1, dark=False, scale=1.0, col=None):
     """ботинок сбоку: носок по направлению facing"""
     a = rad(foot_ang)
     pts = [(-16, -14), (18, -16), (30, 2), (64, 6), (70, 22), (-18, 22)]
@@ -61,7 +61,8 @@ def boot(p, ankle, foot_ang, facing=1, dark=False, scale=1.0):
     for x, y in pts:
         x *= facing * scale; y *= scale
         P.append((ankle[0] + x * math.cos(a) - y * math.sin(a) * facing, ankle[1] + x * math.sin(a) * facing + y * math.cos(a)))
-    p.shape(P, (52, 36, 28) if dark else R.BOOTS, smooth=False, lw=2.4)
+    c = col or R.BOOTS
+    p.shape(P, tuple(int(v * .7) for v in c) if dark else c, smooth=False, lw=2.4)
 
 
 # ---------- вид сбоку (лицом вправо) ----------

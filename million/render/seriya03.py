@@ -266,8 +266,9 @@ def s07(t, L, cue):
 
 def monitors(img, t):
     d = ImageDraw.Draw(img)
-    for x, y in ((150, 480), (330, 470), (510, 480)):
-        d.text((x, y), "$TOKEN", font=F(22, FONT_SUB), fill=(200, 230, 255))
+    f = F(22, FONT_SUB)
+    for cx in (297, 468, 639):   # центры экранов в кадре
+        d.text((cx - f.getlength("$TOKEN") / 2, 578), "$TOKEN", font=f, fill=(200, 230, 255))
 
 
 def s08(t, L, cue):

@@ -651,6 +651,48 @@ def e2_s12(t, L): door(True); e2_static("corridor", (.6, -3.2, 1.15), (.2, .01, 
 
 SC.update({n: globals()[n] for n in ["e2_s01", "e2_s02", "e2_s03", "e2_s04", "e2_s05", "e2_s06", "e2_s07m", "e2_s08", "e2_s09", "e2_s10", "e2_s11", "e2_s12"]})
 
+
+# ======================= Серия 3: логово хозяина канала + сцены =======================
+def set_den():
+    c = new_coll("den")
+    bpy.ops.mesh.primitive_plane_add(size=40, location=(0, 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("dfloor", srgb(40, 36, 40), .4))
+    bpy.ops.mesh.primitive_plane_add(size=40, location=(0, 1.6, 3), rotation=(math.radians(90), 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("dwall", srgb(30, 32, 40), .9))
+    box("ddesk", (.9, 1.0, .74), (1.8, .7, .06), mat("ddeskm", srgb(30, 30, 34), .4), .1, coll=c)
+    SCR = mat("dscr", (0, 0, 0), .2, emit=srgb(90, 160, 255), strength=7)
+    for k, x in enumerate((.3, .9, 1.5)):
+        box("dmon", (x, 1.15, 1.1), (.52, .04, .34), mat("dmonm", (.01, .01, .01), .3), .05, coll=c)
+        box("dmonscr", (x, 1.125, 1.1), (.48, .01, .3), SCR, 0, coll=c)
+    box("dchair", (.9, .55, .5), (.5, .5, .1), mat("dch", srgb(20, 20, 24), .5), .2, coll=c)
+    box("dcans", (1.6, .85, .82), (.06, .06, .12), mat("can", srgb(200, 40, 40), .3, metal=.6), .2, coll=c)
+    return c
+
+
+SETS["den"] = set_den()
+
+
+def e3_static(set_name, loc, look, lens=34, fill=160, rim=260, day=False, opened=False):
+    door(opened)
+    e2_static(set_name, loc, look, lens, fill, rim, day)
+
+
+def e3_s01(t, L): e3_static("corridor", (.6, -3.2, 1.15), (.2, .01, 1.0), day=True, fill=120, rim=120, opened=True)
+def e3_s02(t, L): e3_s01(t, L)
+def e3_s03(t, L): e3_s01(t, L)
+def e3_s04(t, L): e3_static("street", (12.0, -3.6, 1.15), (12.0, .01, .95))
+def e3_s05a(t, L): e3_static("room", (-.3, -3.6, 1.15), (-.3, .01, .95), fill=120, rim=320)
+def e3_s06(t, L): e3_static("zhk", (5.0, -3.6, 1.15), (5.0, .01, 1.1))
+def e3_s07(t, L): door(False); e2_track(t, 4.2, "street", -20, fill=220, rim=420)
+def e3_s08(t, L): e3_static("den", (.2, -3.4, 1.2), (.4, .01, 1.0), fill=40, rim=120)
+def e3_s09(t, L): e3_s08(t, L)
+def e3_s10(t, L): e3_static("room", (.4, -3.6, 1.15), (.4, .01, .95))
+def e3_s11(t, L): e3_static("room", (.2, -3.6, 1.15), (.2, .01, .95), day=True, fill=200, rim=120)
+def e3_s12(t, L): e3_static("room", (.6, -3.6, 1.15), (.6, .01, .95), day=True, fill=220, rim=120)
+
+
+SC.update({n: globals()[n] for n in ["e3_s01", "e3_s02", "e3_s03", "e3_s04", "e3_s05a", "e3_s06", "e3_s07", "e3_s08", "e3_s09", "e3_s10", "e3_s11", "e3_s12"]})
+
 r = S.render
 r.engine = "CYCLES"
 S.cycles.device = "CPU"
@@ -673,7 +715,7 @@ if BG_ONLY:
             _cam(loc, look_at, lens)
     for k in list(SC):
         SC[k].__globals__["cam"] = cam
-MOVING = {"s01", "s11", "e2_s01", "e2_s03", "e2_s05", "e2_s11"}   # сцены, где камера едет за героем
+MOVING = {"s01", "s11", "e2_s01", "e2_s03", "e2_s05", "e2_s11", "e3_s07"}   # сцены, где камера едет за героем
 
 for sc in TL["scenes"]:
     name, L = sc["name"], sc["length"]

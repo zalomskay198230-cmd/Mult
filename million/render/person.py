@@ -26,6 +26,12 @@ CAST = {
     "mama": dict(name="МАМА", sub="Ольга Петровна · 55 лет", skin=(222, 180, 154), hair=(150, 70, 46), hair_style="bob",
                  glasses=True, wrinkles=True, eyes=(100, 90, 70), top="cardigan", top_col=(196, 172, 132), inner=(120, 60, 70),
                  pants=(70, 66, 80), shoes=(90, 60, 50), female=True, prop="phone_call"),
+    "host": dict(name="ХОЗЯЙКА", sub="сдаёт кв. 147", skin=(226, 186, 160), hair=(214, 180, 120), hair_style="bob",
+                 eyes=(90, 110, 120), top="cardigan", top_col=(96, 140, 120), inner=(230, 226, 214),
+                 pants=(60, 62, 74), shoes=(200, 190, 180), female=True),
+    "kid": dict(name="ХОЗЯИН КАНАЛА", sub="20 лет", skin=(226, 192, 166), hair=(150, 120, 80), hair_style="messy",
+                glasses=True, eyes=(90, 100, 110), top="hoodie", top_col=(30, 30, 34), pants=(40, 40, 46),
+                shoes=(230, 230, 228), female=False),
     "owner": dict(name="???", sub="хозяин канала", hooded=True, top="hood_coat", top_col=(26, 26, 30), pants=(30, 30, 34),
                   shoes=(20, 20, 22), skin=(40, 40, 44), female=False),
 }

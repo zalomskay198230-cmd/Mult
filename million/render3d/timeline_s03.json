@@ -1,0 +1,88 @@
+{
+ "scenes": [
+  {
+   "name": "e3_s01",
+   "start": 0.0,
+   "length": 4.978,
+   "cue_start": 0.0,
+   "cue_dur": 4.728
+  },
+  {
+   "name": "e3_s02",
+   "start": 4.978,
+   "length": 6.276,
+   "cue_start": 0.05,
+   "cue_dur": 5.976
+  },
+  {
+   "name": "e3_s03",
+   "start": 11.254,
+   "length": 2.964,
+   "cue_start": 0.05,
+   "cue_dur": 2.664
+  },
+  {
+   "name": "e3_s04",
+   "start": 14.218,
+   "length": 6.012,
+   "cue_start": 0.05,
+   "cue_dur": 5.712
+  },
+  {
+   "name": "e3_s05a",
+   "start": 20.23,
+   "length": 10.668000000000001,
+   "cue_start": 0.05,
+   "cue_dur": 10.368
+  },
+  {
+   "name": "e3_s06",
+   "start": 30.898000000000003,
+   "length": 6.132,
+   "cue_start": 0.05,
+   "cue_dur": 5.832
+  },
+  {
+   "name": "e3_s07",
+   "start": 37.03,
+   "length": 4.428,
+   "cue_start": 0.05,
+   "cue_dur": 4.128
+  },
+  {
+   "name": "e3_s08",
+   "start": 41.458,
+   "length": 6.732,
+   "cue_start": 0.05,
+   "cue_dur": 6.432
+  },
+  {
+   "name": "e3_s09",
+   "start": 48.19,
+   "length": 5.8919999999999995,
+   "cue_start": 0.05,
+   "cue_dur": 5.592
+  },
+  {
+   "name": "e3_s10",
+   "start": 54.081999999999994,
+   "length": 7.308,
+   "cue_start": 0.05,
+   "cue_dur": 7.008
+  },
+  {
+   "name": "e3_s11",
+   "start": 61.38999999999999,
+   "length": 5.34,
+   "cue_start": 0.05,
+   "cue_dur": 5.04
+  },
+  {
+   "name": "e3_s12",
+   "start": 66.72999999999999,
+   "length": 10.748,
+   "cue_start": 0.1,
+   "cue_dur": 7.248
+  }
+ ]
+}

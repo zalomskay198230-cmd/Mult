@@ -92,6 +92,8 @@ F_SUB = ImageFont.truetype(FONT_SUB, 62)
 
 
 def draw_subs(img, t):
+    if os.environ.get("NOSUBS"):   # кадр без субтитров (для обложек)
+        return
     for s, e, text, radio in SUBS:
         if s <= t < e:
             lines, cur = [], ""

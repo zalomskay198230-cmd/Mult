@@ -30,11 +30,11 @@ def text_c(d, y, txt, size, col, stroke=8):
     return y + size + 14
 
 
-def badge(d, txt, col):
+def badge(d, txt, col, y=330):
     f = ImageFont.truetype(FONT_SUB, 52)
     w = f.getlength(txt)
-    d.rounded_rectangle([(CW - w) / 2 - 30, 330, (CW + w) / 2 + 30, 420], radius=20, fill=col)
-    d.text(((CW - w) / 2, 342), txt, font=f, fill=(255, 255, 255))
+    d.rounded_rectangle([(CW - w) / 2 - 30, y, (CW + w) / 2 + 30, y + 90], radius=20, fill=col)
+    d.text(((CW - w) / 2, y + 12), txt, font=f, fill=(255, 255, 255))
 
 
 def base_img(img, crop_box=None, bright=1.0):
@@ -63,9 +63,8 @@ if EP == "2":
 else:
     img = base_img(frame(3, float(os.environ.get("T3", "47.0"))), crop_box=(0, 100, 720, 1280), bright=1.1)
     d = ImageDraw.Draw(img)
-    badge(d, "ФИНАЛ", (40, 170, 100))
-    y = text_c(d, 470, "Я НАШЁЛ", 150, (255, 255, 255))
-    text_c(d, y, "ЕГО", 190, YELLOW)
+    badge(d, "ФИНАЛ", (40, 170, 100), y=200)
+    y = text_c(d, 310, "Я НАШЁЛ ЕГО", 150, YELLOW)
     y = text_c(d, 1440, "хозяин канала оказался", 52, (240, 240, 244), 5)
     text_c(d, y, "ближе, чем я думал", 52, (240, 240, 244), 5)
     text_c(d, 1640, "600 347 ₽ / 1 000 000", 64, YELLOW, 6)

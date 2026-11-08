@@ -693,6 +693,97 @@ def e3_s12(t, L): e3_static("room", (.6, -3.6, 1.15), (.6, .01, .95), day=True, 
 
 SC.update({n: globals()[n] for n in ["e3_s01", "e3_s02", "e3_s03", "e3_s04", "e3_s05a", "e3_s06", "e3_s07", "e3_s08", "e3_s09", "e3_s10", "e3_s11", "e3_s12"]})
 
+
+# ======================= «Глубина 40», серия 1: подводная станция =======================
+def set_seabed():
+    c = new_coll("seabed")
+    bpy.ops.mesh.primitive_plane_add(size=120, location=(0, 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("sand", srgb(90, 92, 84), .9))
+    HULL = mat("hull", srgb(150, 156, 160), .4, metal=.6)
+    WINL = mat("swinl", (0, 0, 0), .2, emit=srgb(255, 220, 160), strength=6)
+    for k, (x, y) in enumerate(((0, 6), (5.5, 7), (-5, 8))):
+        bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=1.4, depth=6, location=(x, y, 1.9), rotation=(0, math.radians(90), 0))
+        o = bpy.context.object; link(o, c); o.data.materials.append(HULL)
+        for p_ in o.data.polygons:
+            p_.use_smooth = True
+        for wx in range(-2, 3):
+            sphere("port", (x + wx * 1.1, y - 1.38, 2.1), (.22, .05, .22), WINL, coll=c)
+        for lx in (-2.2, 2.2):
+            box("leg", (x + lx, y, .5), (.15, .15, 1.0), HULL, 0, coll=c)
+    box("tube", (2.7, 6.5, 1.9), (2.5, .6, .6), HULL, .3, coll=c)
+    rnd = random.Random(9)
+    ROCK = mat("rock", srgb(60, 64, 62), .9)
+    for _ in range(30):
+        sphere("rock", (rnd.uniform(-20, 20), rnd.uniform(2, 20), 0), (rnd.uniform(.2, .8), rnd.uniform(.2, .8), rnd.uniform(.1, .4)), ROCK, coll=c)
+    return c
+
+
+def set_station(red=False):
+    c = new_coll("station_red" if red else "station")
+    bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=1.8, depth=40, location=(0, 0, 1.25), rotation=(0, math.radians(90), 0))
+    o = bpy.context.object; link(o, c)
+    o.data.materials.append(mat("inner", srgb(120, 128, 134) if not red else srgb(110, 70, 70), .5, metal=.5))
+    bpy.ops.object.mode_set(mode="EDIT"); bpy.ops.mesh.flip_normals(); bpy.ops.object.mode_set(mode="OBJECT")
+    for p_ in o.data.polygons:
+        p_.use_smooth = True
+    box("grate", (0, 0, 0), (40, 2.6, .05), mat("grate", srgb(70, 74, 80), .6, metal=.7), 0, coll=c)
+    PIPE = mat("pipe", srgb(180, 120, 60), .4, metal=.7)
+    for z in (2.3, 2.5):
+        bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=.06, depth=40, location=(0, 1.1, z), rotation=(0, math.radians(90), 0))
+        link(bpy.context.object, c); bpy.context.object.data.materials.append(PIPE)
+    PANEL = mat("panel", srgb(60, 64, 70), .5, metal=.4)
+    LEDG = mat("ledg", (0, 0, 0), .2, emit=(.1, 1, .3), strength=6)
+    LEDR = mat("ledr", (0, 0, 0), .2, emit=(1, .1, .05), strength=8)
+    for k in range(-8, 9):
+        box("panel", (k * 2.2, 1.45, 1.3), (1.2, .1, .8), PANEL, .05, coll=c)
+        for j in range(3):
+            sphere("led", (k * 2.2 - .4 + j * .3, 1.39, 1.55), (.03, .02, .03), LEDR if red and j == 0 else LEDG, coll=c)
+    STRIP = mat("strip", (0, 0, 0), .2, emit=srgb(255, 60, 40) if red else srgb(230, 240, 255), strength=5 if red else 7)
+    box("strip", (0, 0, 2.9), (40, .3, .04), STRIP, 0, coll=c)
+    box("porthole", (3.3, 1.5, 1.55), (.6, .06, .6), mat("pw", (0, 0, 0), .2, emit=srgb(30, 70, 120), strength=2), .45, coll=c)
+    return c
+
+
+def set_airlock():
+    c = new_coll("airlock")
+    bpy.ops.mesh.primitive_plane_add(size=20, location=(0, 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("al_floor", srgb(60, 64, 70), .5, metal=.6))
+    bpy.ops.mesh.primitive_plane_add(size=20, location=(0, 1.2, 3), rotation=(math.radians(90), 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("al_wall", srgb(110, 116, 122), .5, metal=.5))
+    STEEL = mat("al_steel", srgb(150, 154, 160), .35, metal=.8)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=.8, depth=.12, location=(0, 1.12, 1.25), rotation=(math.radians(90), 0, 0))
+    link(bpy.context.object, c); bpy.context.object.data.materials.append(STEEL)
+    bpy.ops.mesh.primitive_torus_add(major_radius=.85, minor_radius=.07, location=(0, 1.05, 1.25), rotation=(math.radians(90), 0, 0))
+    link(bpy.context.object, c); bpy.context.object.data.materials.append(STEEL)
+    bpy.ops.mesh.primitive_torus_add(major_radius=.32, minor_radius=.035, location=(0, 1.0, 1.25), rotation=(math.radians(90), 0, 0))
+    link(bpy.context.object, c); bpy.context.object.data.materials.append(mat("wheel", srgb(200, 60, 40), .4, metal=.5))
+    for a in range(0, 180, 45):
+        box("spoke", (0, 1.0, 1.25), (.64, .03, .03), mat("spk", srgb(200, 60, 40), .4), 0, rot=(0, math.radians(a), 0), coll=c)
+    sphere("al_lamp", (0, 1.1, 2.35), (.12, .08, .12), mat("al_lampm", (0, 0, 0), .2, emit=srgb(255, 160, 40), strength=10), coll=c)
+    return c
+
+
+SETS["seabed"] = set_seabed()
+SETS["station"] = set_station()
+SETS["station_red"] = set_station(red=True)
+SETS["airlock"] = set_airlock()
+
+
+def g1_s01(t, L):   # спуск камеры к станции
+    door(False)
+    show_set("seabed"); lighting(rim=500, fill=300, bg=(.002, .02, .04))
+    k = min(1, t / L)
+    FILL.location = (0, -2, 8); RIMl.location = (4, 2, 6)
+    cam((-1.5 + 2 * k, -10 + 2 * k, 9 - 6 * k), (0, 6, 1.6 + .2 * k), 32)
+
+
+def g1_s02(t, L): door(False); e2_static("station", (-1.0, -1.75, 1.15), (0.2, .6, 1.0), 26, fill=60, rim=120, day=True)
+def g1_s03(t, L): door(False); e2_static("station_red", (-1.0, -1.75, 1.15), (0.2, .6, 1.0), 26, fill=8, rim=60)
+def g1_s13(t, L): door(False); e2_static("airlock", (.2, -3.4, 1.15), (0, .01, 1.15), 34, fill=20, rim=80)
+
+
+SC.update({n: globals()[n] for n in ["g1_s01", "g1_s02", "g1_s03", "g1_s13"]})
+
 r = S.render
 r.engine = "CYCLES"
 S.cycles.device = "CPU"
@@ -715,7 +806,7 @@ if BG_ONLY:
             _cam(loc, look_at, lens)
     for k in list(SC):
         SC[k].__globals__["cam"] = cam
-MOVING = {"s01", "s11", "e2_s01", "e2_s03", "e2_s05", "e2_s11", "e3_s07"}   # сцены, где камера едет за героем
+MOVING = {"s01", "s11", "e2_s01", "e2_s03", "e2_s05", "e2_s11", "e3_s07", "g1_s01"}   # сцены, где камера едет за героем
 
 for sc in TL["scenes"]:
     name, L = sc["name"], sc["length"]

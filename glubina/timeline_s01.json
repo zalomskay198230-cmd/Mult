@@ -1,0 +1,32 @@
+{
+ "scenes": [
+  {
+   "name": "g1_s01",
+   "start": 0.0,
+   "length": 5.108776,
+   "cue_start": 0.0,
+   "cue_dur": 4.858776
+  },
+  {
+   "name": "g1_s02",
+   "start": 5.108776,
+   "length": 5.916327,
+   "cue_start": 0.05,
+   "cue_dur": 5.616327
+  },
+  {
+   "name": "g1_s03",
+   "start": 11.025103,
+   "length": 5.681223999999999,
+   "cue_start": 0.05,
+   "cue_dur": 5.381224
+  },
+  {
+   "name": "g1_s13",
+   "start": 53.678979,
+   "length": 10.256734999999999,
+   "cue_start": 0.1,
+   "cue_dur": 6.556735
+  }
+ ]
+}

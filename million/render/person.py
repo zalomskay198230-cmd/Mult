@@ -32,6 +32,9 @@ CAST = {
     "kid": dict(name="ХОЗЯИН КАНАЛА", sub="20 лет", skin=(226, 192, 166), hair=(150, 120, 80), hair_style="messy",
                 glasses=True, eyes=(90, 100, 110), top="hoodie", top_col=(30, 30, 34), pants=(40, 40, 46),
                 shoes=(230, 230, 228), female=False),
+    "oleg": dict(name="ОЛЕГ", sub="инженер станции «Нерпа» · 34", skin=(212, 168, 138), hair=(120, 96, 64), hair_style="messy",
+                 beard=True, eyes=(90, 110, 120), top="hoodie", top_col=(40, 56, 86), pants=(40, 56, 86),
+                 shoes=(40, 40, 46), female=False),
     "owner": dict(name="???", sub="хозяин канала", hooded=True, top="hood_coat", top_col=(26, 26, 30), pants=(30, 30, 34),
                   shoes=(20, 20, 22), skin=(40, 40, 44), female=False),
 }

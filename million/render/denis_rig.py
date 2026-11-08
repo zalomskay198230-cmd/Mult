@@ -18,6 +18,25 @@ KUR_TOP, KUR_TOP_SH = (236, 172, 44), (186, 128, 26)      # жёлтая кур�
 BAG, BAG_SH = (44, 150, 112), (28, 104, 76)                # термо-рюкзак
 
 
+HOODIE = True        # детали толстовки (капюшон, карман, шнурки)
+SUIT = False         # рабочий комбинезон: оранжевые вставки и молния
+
+
+def use(who="denis", top=None, pants=None, shoes=None, hoodie=True, suit=False):
+    """переключить анимируемого персонажа (Денис → Олег и т. п.)"""
+    global C, SKIN, SKIN_SH, TOP, TOP_SH, JEANS, JEANS_SH, SHOE, HAIR, HAIR_SH, BASE_TOP, BASE_TOP_SH, HOODIE, SUIT
+    C = person.CAST[who]
+    SKIN, SKIN_SH = C["skin"], person.dk(C["skin"], .74)
+    BASE_TOP = top or C["top_col"]
+    BASE_TOP_SH = person.dk(BASE_TOP, .7)
+    TOP, TOP_SH = BASE_TOP, BASE_TOP_SH
+    JEANS = pants or C["pants"]
+    JEANS_SH = person.dk(JEANS, .7)
+    SHOE = shoes or C["shoes"]
+    HAIR, HAIR_SH = C["hair"], person.dk(C["hair"], .62)
+    HOODIE, SUIT = hoodie, suit
+
+
 def outfit(courier):
     global TOP, TOP_SH
     TOP, TOP_SH = (KUR_TOP, KUR_TOP_SH) if courier else (BASE_TOP, BASE_TOP_SH)
@@ -100,11 +119,19 @@ def front(size, ox, ground, s, t, arms=("down", "down"), legs="idle", expr="neut
     p.shape(torso, TOP)
     p.shade(torso, [(-130, 160), (-24, 160), (-34, 300), (-30, 540), (-130, 540)], TOP_SH)
     p.shade(torso, [(78, 190), (120, 190), (120, 540), (84, 540)], person.LIGHT_RIM, 60)
-    p.shape([(-70, 190), (-40, 176), (0, 200), (40, 176), (70, 190), (40, 236), (0, 250), (-40, 236)], person.dk(TOP, .85), lw=1.8)
-    p.shape([(-60, 400), (60, 400), (70, 480), (-70, 480)], person.dk(TOP, .9), lw=1.6)
-    for sx in (-1, 1):
-        p.curve([(sx * 16, 236), (sx * 18, 290), (sx * 14, 310)], col=(220, 220, 216), lw=2.4)
-    p.shape([(-92, 506), (92, 506), (90, 528), (-90, 528)], person.dk(TOP, .8), lw=1.4, smooth=False)
+    if HOODIE:
+        p.shape([(-70, 190), (-40, 176), (0, 200), (40, 176), (70, 190), (40, 236), (0, 250), (-40, 236)], person.dk(TOP, .85), lw=1.8)
+        p.shape([(-60, 400), (60, 400), (70, 480), (-70, 480)], person.dk(TOP, .9), lw=1.6)
+        for sx in (-1, 1):
+            p.curve([(sx * 16, 236), (sx * 18, 290), (sx * 14, 310)], col=(220, 220, 216), lw=2.4)
+        p.shape([(-92, 506), (92, 506), (90, 528), (-90, 528)], person.dk(TOP, .8), lw=1.4, smooth=False)
+    if SUIT:   # комбинезон: воротник, молния, оранжевые вставки на плечах, карман с фонариком
+        p.shape([(-40, 180), (0, 230), (40, 180), (30, 176), (0, 210), (-30, 176)], person.dk(TOP, .8), lw=1.6)
+        p.curve([(0, 220), (2, 520)], col=(180, 184, 190), lw=3)
+        for sx in (-1, 1):
+            p.shape([(sx * 60, 186), (sx * 104, 200), (sx * 106, 236), (sx * 62, 226)], (236, 120, 40), lw=1.6)
+        p.shape([(-82, 300), (-36, 300), (-36, 350), (-82, 350)], person.dk(TOP, .82), lw=1.4, smooth=False)
+        p.shape([(-72, 286), (-58, 286), (-58, 312), (-72, 312)], (60, 60, 66), lw=1.2, smooth=False)
     if courier:   # светоотражающие полосы и лямки
         for y in (330, 440):
             p.shape([(-100, y), (100, y), (98, y + 16), (-98, y + 16)], (214, 218, 222), line=False, smooth=False)
@@ -171,7 +198,8 @@ def side(size, ox, ground, s, t, mode="run", expr="tense", hood_up=False, courie
     torso = [U(pt) for pt in [(-46, 186), (20, 180), (46, 210), (48, 330), (40, 520), (-44, 524), (-50, 330)]]
     p.shape(torso, TOP)
     p.shade(torso, [U(pt) for pt in [(-60, 170), (-10, 170), (-14, 540), (-60, 540)]], TOP_SH)
-    p.shape([U(pt) for pt in [(-50, 190), (-20, 176), (-10, 230), (-46, 250)]], person.dk(TOP, .85), lw=1.6)   # капюшон на спине
+    if HOODIE:
+        p.shape([U(pt) for pt in [(-50, 190), (-20, 176), (-10, 230), (-46, 250)]], person.dk(TOP, .85), lw=1.6)   # капюшон на спине
     if courier:   # рюкзак на спине
         bag = [U(pt) for pt in [(-44, 176), (-150, 182), (-154, 470), (-44, 474)]]
         p.shape(bag, BAG, smooth=False)

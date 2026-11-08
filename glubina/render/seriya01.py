@@ -112,7 +112,7 @@ def water(img, t, k=1.0):
     rd = ImageDraw.Draw(rays)
     for i in range(5):
         x = 80 + i * 150 + 40 * math.sin(t * .5 + i)
-        rd.polygon([(x - 30, 0), (x + 30, 0), (x + 140, H), (x + 60, H)], fill=50)
+        rd.polygon([(x - 30, 0), (x + 30, 0), (x + 140, H), (x + 60, H)], fill=22)
     img.paste(Image.new("RGB", (W, H), (150, 210, 240)), (0, 0), rays.filter(ImageFilter.GaussianBlur(30)))
     d = ImageDraw.Draw(img)
     rnd = random.Random(2)
@@ -146,8 +146,8 @@ def oleg(x, s, t, arms=("down", "down"), expr="neutral", look=(0, 0), legs="idle
 
 # ---------- сцены ----------
 def s01(t, L, cue):
-    img = bg("s01", t, 1.6)
-    img = water(img, t)
+    img = bg("s01", t, 1.0)
+    img = water(img, t, .8)
     d = ImageDraw.Draw(img)
     f = F(34, FONT_SUB)
     d.rounded_rectangle([30, 30, 60 + f.getlength("ГЛУБИНА 40"), 90], radius=12, fill=(10, 16, 26))
@@ -312,13 +312,17 @@ def s10(t, L, cue):
     d = ImageDraw.Draw(img)
     d.rectangle([0, 900, W, 960], fill=(70, 50, 40), outline=INK, width=4)
     p = (t - cue["10"]) / dur("10.mp3")
-    items = [("tank", 140, .12, "воздух", "6 часов"), ("water", 300, .45, "2 л", "вода"), ("choc", 450, .63, "шоколад", "1 плитка"),
-             ("torch", 600, .78, "фонарь", "заряд 80%")]
+    items = [("tank", 150, .1, "воздух", "6 часов"), ("water", 270, .5, "2 л", "вода"), ("choc", 390, .72, "шоколад", "1 плитка"),
+             ("torch", 490, .86, "фонарь", "заряд 80%")]
     shown = None
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(lay)
     for kind, x, when, tt, sub in items:
         if p > when:
-            item(d, kind, x, 900)
+            item(ld, kind, x, 900)
             shown = (tt, sub)
+    big = lay.resize((int(W * 1.35), int(H * 1.35)), Image.LANCZOS)
+    img.paste(big, (int(-W * .175), int(900 - 900 * 1.35)), big)
     if shown:
         tag(img, *shown, 1000)
     depth_plate(img)

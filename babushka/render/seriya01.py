@@ -31,6 +31,9 @@ PLAN[0] = ("s01", [("01", 0.6)], 0.6)            # первые полсекун
 PLAN[10] = ("s11", [("11", 0.05)], 1.9)          # пауза под стук
 PLAN[-1] = ("s12r", [("12r", 0.3)], 4.2)
 setup(LINES, PLAN)
+# в первой сцене текст уже есть титром — субтитры не дублируем
+_s2 = [x for x in toonlib.scenes if x[0] == "s02"][0][1]
+toonlib.SUBS[:] = [x for x in toonlib.SUBS if x[0] >= _s2]
 
 FR = os.path.join(ROOT, "babushka", "frames_bg")
 F = lambda sz, f=FONT_B: ImageFont.truetype(f, sz)
@@ -148,12 +151,14 @@ def s01(t, L, cue):   # крупно: забинтованная рука, ск�
         a = k * 1.05
         d.ellipse([cx + 120 * math.cos(a) - 12, py + 60 * math.sin(a) - 8, cx + 120 * math.cos(a) + 12, py + 60 * math.sin(a) + 8], fill=(200, 136, 60))
     # рука с ручкой сковородки
-    d.line([cx + 270, cy, 720, cy - 40], fill=(26, 26, 30), width=40)
-    d.rounded_rectangle([560, cy - 110, 800, cy + 50], radius=60, fill=SKIN_B, outline=INK, width=5)
-    d.rounded_rectangle([600, cy - 120, 800, cy + 60], radius=30, fill=(248, 248, 244), outline=INK, width=5)   # бинт
-    for k in range(4):
-        d.line([610 + k * 45, cy - 116, 640 + k * 45, cy + 56], fill=(210, 210, 206), width=3)
-    d.ellipse([660, cy - 70, 700, cy - 36], fill=(200, 110, 100))
+    d.line([cx + 270, cy, 560, cy - 30], fill=(26, 26, 30), width=40)
+    d.rounded_rectangle([450, cy - 100, 610, cy + 50], radius=60, fill=SKIN_B, outline=INK, width=5)   # кисть
+    for k in range(3):
+        d.rounded_rectangle([440 + k * 22, cy - 120 + k * 4, 480 + k * 22, cy - 60], radius=16, fill=SKIN_B, outline=INK, width=3)
+    d.rounded_rectangle([560, cy - 130, 800, cy + 70], radius=30, fill=(248, 248, 244), outline=INK, width=5)   # бинт
+    for k in range(5):
+        d.line([570 + k * 45, cy - 126, 600 + k * 45, cy + 66], fill=(210, 210, 206), width=3)
+    d.ellipse([600, cy - 80, 640, cy - 44], fill=(200, 110, 100))
     img = steam(img, t, cx, cy - 140)
     d = ImageDraw.Draw(img)
     f = F(62, FONT_SUB)
@@ -307,9 +312,10 @@ def s10(t, L, cue):
     d = ImageDraw.Draw(img)
     for i in range(5):   # ноты
         life = (t * .5 + i / 5) % 1
-        x, y = 260 - 40 * life + i * 20, 520 - 300 * life
-        a = int(255 * (1 - life))
-        d.text((x, y), "♪", font=F(60), fill=(80, 80, 160))
+        x, y = 210 - 90 * life - i * 6, 470 - 260 * life
+        d.ellipse([x, y + 30, x + 26, y + 50], fill=(70, 70, 150))   # нота рисуется вручную
+        d.line([x + 24, y + 40, x + 24, y], fill=(70, 70, 150), width=5)
+        d.line([x + 24, y, x + 40, y + 12], fill=(70, 70, 150), width=5)
     return img
 
 

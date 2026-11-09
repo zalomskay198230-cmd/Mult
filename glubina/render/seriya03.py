@@ -10,7 +10,10 @@ toonlib.TTS = os.path.join(HERE, "..", "tts", "s01")
 import seriya01 as G
 _argv = sys.argv[:]
 sys.argv[1:2] = [os.path.join(HERE, "..", "tts", "s02")]
-import seriya02 as G2          # Костя, люк, монитор
+import importlib.util
+_sp = importlib.util.spec_from_file_location("glubina_s02", os.path.join(HERE, "seriya02.py"))
+G2 = importlib.util.module_from_spec(_sp)   # Костя, люк, монитор (по пути: в sys.path есть другой seriya02)
+_sp.loader.exec_module(G2)
 sys.argv[:] = _argv
 toonlib.TTS = TTS3
 from toonlib import *
@@ -137,7 +140,7 @@ def s05(t, L, cue):
         if p > .3:   # линия падает в ноль
             d.rectangle([140, 320, 580, 560], fill=(10, 16, 14))
             d.line([140, 470, 580, 470], fill=(255, 90, 90), width=4)
-            d.rectangle([140, 590, 340, 700], fill=(10, 16, 14))
+            d.rectangle([140, 602, 340, 700], fill=(10, 16, 14))
             d.text((150, 600), "0", font=F(80, FONT_SUB), fill=(255, 90, 90))
     else:
         img = G.bg("s03", t, 1.1)

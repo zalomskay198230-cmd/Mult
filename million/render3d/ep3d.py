@@ -784,6 +784,42 @@ def g1_s13(t, L): door(False); e2_static("airlock", (.2, -3.4, 1.15), (0, .01, 1
 
 SC.update({n: globals()[n] for n in ["g1_s01", "g1_s02", "g1_s03", "g1_s13"]})
 
+
+# ======================= «Бабушку укусили»: кухня =======================
+def set_kitchen():
+    c = new_coll("kitchen")
+    bpy.ops.mesh.primitive_plane_add(size=20, location=(0, 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("k_floor", srgb(150, 120, 90), .5))
+    bpy.ops.mesh.primitive_plane_add(size=20, location=(0, 1.4, 3), rotation=(math.radians(90), 0, 0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("k_wall", srgb(214, 222, 210), .8))
+    TILE = mat("k_tile", srgb(190, 214, 220), .3)
+    for i in range(-6, 7):
+        for j in range(4):
+            box("tile", (i * .3 + .15, 1.39, .95 + j * .3 + .15), (.28, .01, .28), TILE, .1, coll=c)
+    CAB = mat("k_cab", srgb(236, 230, 214), .5)
+    box("counter", (0, 1.1, .45), (3.6, .6, .9), CAB, .05, coll=c)
+    box("top", (0, 1.1, .92), (3.7, .64, .05), mat("k_top", srgb(120, 90, 70), .4), .1, coll=c)
+    box("wallcab", (0, 1.25, 2.3), (3.6, .35, .7), CAB, .05, coll=c)
+    box("stove", (.5, 1.05, .955), (.7, .55, .02), mat("k_stove", srgb(30, 30, 34), .3), .1, coll=c)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=.17, depth=.04, location=(.4, .95, 1.0)); link(bpy.context.object, c)
+    bpy.context.object.data.materials.append(mat("pan", srgb(40, 40, 44), .3, metal=.7))
+    box("window", (-1.3, 1.38, 1.75), (.9, .03, .9), mat("k_win", (0, 0, 0), .2, emit=srgb(220, 230, 240), strength=3), .02, coll=c)
+    box("table", (-.9, -.2, .74), (1.0, .7, .05), mat("k_table", srgb(140, 104, 76), .5), .1, coll=c)
+    box("teapot", (-1.0, -.2, .84), (.16, .16, .16), mat("k_teapot", srgb(220, 60, 50), .3), .5, coll=c)
+    return c
+
+
+SETS["kitchen"] = set_kitchen()
+
+
+def b1_kitchen(t, L): door(False); e2_static("kitchen", (.1, -3.2, 1.15), (.1, .01, 1.05), 32, fill=180, rim=140, day=True)
+def b1_kitchen_close(t, L): door(False); e2_static("kitchen", (.45, -.8, 1.35), (.4, 1.0, .98), 30, fill=180, rim=140, day=True)
+def b1_street(t, L): door(False); e2_static("street", (8.0, -3.6, 1.15), (8.0, .01, .95), fill=140, rim=300)
+def b1_door(t, L): door(False); e2_static("corridor", (.0, -3.0, 1.15), (.0, .01, 1.05), 32, day=True, fill=90, rim=90)
+
+
+SC.update({"b1_kitchen": b1_kitchen, "b1_kitchen_close": b1_kitchen_close, "b1_street": b1_street, "b1_door": b1_door})
+
 r = S.render
 r.engine = "CYCLES"
 S.cycles.device = "CPU"

@@ -35,6 +35,13 @@ CAST = {
     "oleg": dict(name="ОЛЕГ", sub="инженер станции «Нерпа» · 34", skin=(212, 168, 138), hair=(120, 96, 64), hair_style="messy",
                  beard=True, eyes=(90, 110, 120), top="hoodie", top_col=(40, 56, 86), pants=(40, 56, 86),
                  shoes=(40, 40, 46), female=False),
+    "vnuk": dict(name="САША", sub="внук · 17 лет", skin=(220, 176, 146), hair=(60, 44, 36), hair_style="messy",
+                 eyes=(80, 96, 70), top="hoodie", top_col=(176, 52, 50), pants=(50, 60, 84), shoes=(232, 232, 228), female=False),
+    "babushka": dict(name="БАБУШКА", sub="Валентина Петровна · 76", skin=(224, 186, 162), hair=(214, 212, 216), hair_style="bob",
+                     glasses=True, wrinkles=True, eyes=(110, 120, 130), top="cardigan", top_col=(150, 112, 150), inner=(236, 230, 220),
+                     pants=(70, 64, 80), shoes=(110, 80, 70), female=True),
+    "patrul": dict(name="ПАТРУЛЬ", sub="санитарный", skin=(200, 170, 140), hair=(40, 40, 40), hair_style="messy",
+                   eyes=(40, 40, 40), top="hoodie", top_col=(222, 196, 46), pants=(222, 196, 46), shoes=(40, 40, 46), female=False),
     "owner": dict(name="???", sub="хозяин канала", hooded=True, top="hood_coat", top_col=(26, 26, 30), pants=(30, 30, 34),
                   shoes=(20, 20, 22), skin=(40, 40, 44), female=False),
 }

@@ -3,3 +3,4 @@ __pycache__/
 million/render3d/frames/
 *.mp4.wav
 million/render3d/frames_bg/
+babushka/frames_bg/

@@ -44,6 +44,9 @@ CAST = {
                    eyes=(40, 40, 40), top="hoodie", top_col=(222, 196, 46), pants=(222, 196, 46), shoes=(40, 40, 46), female=False),
     "kostya": dict(name="КОСТЯ", sub="напарник", skin=(196, 196, 196), hair=(26, 26, 30), hair_style="slick",
                    eyes=(120, 140, 150), top="hoodie", top_col=(30, 32, 38), pants=(30, 32, 38), shoes=(30, 32, 38), female=False),
+    "kapitan": dict(name="КАПИТАН", sub="спасательный катер", skin=(206, 160, 130), hair=(200, 200, 204), hair_style="slick",
+                    beard=True, wrinkles=True, eyes=(80, 100, 120), top="hoodie", top_col=(220, 96, 40), pants=(40, 46, 60),
+                    shoes=(30, 30, 34), female=False),
     "owner": dict(name="???", sub="хозяин канала", hooded=True, top="hood_coat", top_col=(26, 26, 30), pants=(30, 30, 34),
                   shoes=(20, 20, 22), skin=(40, 40, 44), female=False),
 }

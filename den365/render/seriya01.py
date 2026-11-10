@@ -68,7 +68,7 @@ def draw_caps(img, t):
         lines.append(cur)
         pop = min(1, (t - s) / .07)
         d = ImageDraw.Draw(img)
-        y0 = int(H * .70) - len(lines) * 33
+        y0 = int(H * .75) - len(lines) * 33
         for i, ln in enumerate(lines):
             full = " ".join(w for w, _ in ln)
             x = (W - F_CAP.getlength(full)) / 2
@@ -82,193 +82,22 @@ def draw_caps(img, t):
 toonlib.draw_subs = draw_caps
 
 
-# ---------- мир ----------
-def city(d, lights_on=True, seed=3):
-    rnd = random.Random(seed)
-    x = -20
-    while x < WW:
-        w, h = rnd.randint(70, 150), rnd.randint(180, 420)
-        d.rectangle([x, GR - h, x + w, GR], fill=(22, 26, 40))
-        for wy in range(GR - h + 16, GR - 20, 30):
-            for wx in range(x + 10, x + w - 14, 22):
-                if rnd.random() < .3:
-                    d.rectangle([wx, wy, wx + 10, wy + 14], fill=(230, 190, 100) if lights_on else (30, 34, 46))
-        x += w + rnd.randint(0, 20)
+# ---------- мир (рисунок — в flatworld.py) ----------
+sys.path.insert(0, HERE)
+from flatworld import world, View, chibi, shovel, container, WW, WH, GR, PIT_X0, PIT_X1
 
 
-def house(d, lights_on=True):
-    x0, x1, y0 = 60, 640, GR - 300
-    d.polygon([(x0 - 30, y0), ((x0 + x1) / 2, y0 - 150), (x1 + 30, y0)], fill=(70, 50, 52))
-    wall_in = (64, 58, 66) if lights_on else (30, 28, 34)
-    d.rectangle([x0, y0, x1, GR], fill=wall_in)
-    d.rectangle([x0, y0, x1, GR], outline=(150, 110, 100), width=14)            # стены в разрезе
-    d.line([360, y0, 360, GR - 150], fill=(150, 110, 100), width=12)             # перегородка
-    if lights_on:
-        for lx in (210, 500):
-            d.polygon([(lx - 14, y0 + 14), (lx + 14, y0 + 14), (lx + 110, GR), (lx - 110, GR)], fill=(84, 76, 80))
-            d.ellipse([lx - 12, y0 + 10, lx + 12, y0 + 30], fill=(255, 230, 160))
-    # кухня: стол, холодильник
-    d.rectangle([90, GR - 140, 140, GR], fill=(200, 200, 206))
-    d.rectangle([180, GR - 60, 320, GR - 50], fill=(140, 100, 70))
-    d.line([190, GR - 50, 190, GR], fill=(140, 100, 70), width=6); d.line([310, GR - 50, 310, GR], fill=(140, 100, 70), width=6)
-    # спальня: кровать, окно
-    d.rectangle([420, GR - 50, 600, GR], fill=(90, 110, 160)); d.rectangle([420, GR - 70, 460, GR - 50], fill=(230, 230, 236))
-    d.rectangle([480, y0 + 60, 580, y0 + 140], fill=(16, 20, 36) if lights_on else (10, 12, 20), outline=(150, 110, 100), width=6)
-
-
-def garage(d):
-    x0, x1, y0 = 800, 1140, GR - 210
-    d.rectangle([x0, y0, x1, GR], fill=(52, 54, 60))
-    d.rectangle([x0, y0, x1, GR], outline=(120, 124, 132), width=12)
-    d.polygon([(x0 - 20, y0), (x1 + 20, y0), (x1 + 20, y0 - 26), (x0 - 20, y0 - 26)], fill=(90, 94, 102))
-    d.rectangle([840, GR - 150, 980, GR], fill=(40, 42, 48), outline=(120, 124, 132), width=4)
-
-
-def earth(img):
-    d = ImageDraw.Draw(img)
-    img.paste(vgrad(WW, WH - GR, *EARTH), (0, GR))
-    rnd = random.Random(5)
-    for _ in range(400):
-        x, y, r = rnd.uniform(0, WW), rnd.uniform(GR + 20, WH), rnd.uniform(4, 14)
-        d.ellipse([x - r, y - r * .6, x + r, y + r * .6], fill=(40, 36, 38))
-    d.rectangle([0, GR - 6, WW, GR + 8], fill=(70, 90, 60))   # трава / поверхность
-
-
-def container(d, x0, y0, x1, y1, col=(176, 72, 52), door=True):
-    d.rectangle([x0, y0, x1, y1], fill=col)
-    for x in range(int(x0) + 14, int(x1) - 6, 20):
-        d.line([x, y0 + 8, x, y1 - 8], fill=tuple(int(c * .78) for c in col), width=6)
-    d.rectangle([x0, y0, x1, y1], outline=tuple(int(c * .6) for c in col), width=5)
-    if door:
-        d.rectangle([(x0 + x1) / 2 - 30, y1 - 120, (x0 + x1) / 2 + 30, y1 - 4], fill=(30, 30, 34))
-
-
-def scrapyard(d):
-    for x in range(1240, WW, 30):
-        d.line([x, GR - 110, x, GR], fill=(70, 74, 80), width=4)
-    d.line([1240, GR - 100, WW, GR - 100], fill=(70, 74, 80), width=4)
-    container(d, 1270, GR - 110, 1520, GR, (60, 96, 130), False)
-    container(d, 1300, GR - 220, 1560, GR - 110, (176, 72, 52), False)
-    container(d, 1330, GR - 330, 1580, GR - 220, (70, 120, 80), False)
-
-
-_world = {}
-
-
-def world(day=False, lights=True, dug=0.0, cont=False):
-    """статичный слой мира; dug — сколько ямы выкопано (0..1)"""
-    key = (day, lights, round(dug, 2), cont)
-    if key in _world:
-        return _world[key].copy()
-    img = vgrad(WW, WH, *(SKY_D if day else SKY_N))
-    d = ImageDraw.Draw(img)
-    if not day:
-        rnd = random.Random(1)
-        for _ in range(220):
-            x, y = rnd.uniform(0, WW), rnd.uniform(0, GR - 300)
-            d.ellipse([x - 1.5, y - 1.5, x + 1.5, y + 1.5], fill=(200, 200, 220))
-    city(d, lights and not day)
-    earth(img)
-    d = ImageDraw.Draw(img)
-    house(d, lights)
-    d.ellipse([660, GR - 230, 780, GR - 110], fill=(40, 80, 50)); d.rectangle([714, GR - 120, 726, GR], fill=(70, 50, 40))   # дерево
-    garage(d)
-    scrapyard(d)
-    if dug > 0:   # яма под гаражом, растёт вниз
-        depth = 340 * dug
-        d.rectangle([PIT_X0, GR + 8, PIT_X1, GR + 8 + depth], fill=(62, 50, 44))
-        d.rectangle([PIT_X0, GR + 8, PIT_X1, GR + 8 + depth], outline=(110, 90, 76), width=6)
-        for k in range(int(depth // 34)):   # лестница
-            d.line([PIT_X1 - 60, GR + 20 + k * 34, PIT_X1 - 20, GR + 20 + k * 34], fill=(150, 104, 60), width=5)
-        d.line([PIT_X1 - 60, GR, PIT_X1 - 60, GR + depth], fill=(150, 104, 60), width=6)
-        d.line([PIT_X1 - 20, GR, PIT_X1 - 20, GR + depth], fill=(150, 104, 60), width=6)
-    if cont:
-        container(d, PIT_X0 + 20, GR + 120, PIT_X1 - 80, GR + 340)
-    if len(_world) > 12:
-        _world.clear()
-    _world[key] = img
-    return img.copy()
-
-
-# ---------- персонажи: плоские чиби ----------
-CHAR = {
-    "me": dict(skin=(232, 186, 150), hair=(40, 32, 30), top=(60, 120, 200), pants=(40, 50, 70), style="short"),
-    "wife": dict(skin=(238, 196, 164), hair=(230, 190, 90), top=(70, 160, 120), pants=(50, 50, 60), style="long"),
-    "son": dict(skin=(236, 192, 160), hair=(120, 80, 50), top=(220, 70, 60), pants=(40, 60, 90), style="short"),
-    "mil": dict(skin=(230, 190, 166), hair=(200, 200, 206), top=(140, 90, 150), pants=(70, 60, 80), style="bun"),
-    "neigh": dict(skin=(214, 168, 132), hair=(214, 168, 132), top=(240, 140, 40), pants=(50, 54, 60), style="bald"),
-}
-
-
-def chibi(d, who, x, y, s=1.0, t=0.0, face="neutral", look=0, walk=False, arm=None):
-    """x, y — точка на полу; рост ~110*s"""
-    c = CHAR[who]
-    bob = 2 * math.sin(t * 3 + x) * s
-    lg = 8 * math.sin(t * 10) * s if walk else 0
-    for sx, off in ((-1, lg), (1, -lg)):   # ноги
-        d.rounded_rectangle([x + sx * 10 * s - 7 * s + off, y - 34 * s, x + sx * 10 * s + 7 * s + off, y], radius=int(5 * s), fill=c["pants"])
-    by = y - 30 * s + bob
-    d.rounded_rectangle([x - 22 * s, by - 46 * s, x + 22 * s, by], radius=int(12 * s), fill=c["top"])   # тело
-    for sx in (-1, 1):   # руки
-        if arm == "up" and sx == 1:
-            d.line([x + 20 * s, by - 40 * s, x + 34 * s, by - 76 * s], fill=c["top"], width=int(11 * s))
-            d.ellipse([x + 28 * s, by - 86 * s, x + 40 * s, by - 74 * s], fill=c["skin"])
-        elif arm == "phone" and sx == -1:
-            d.line([x - 20 * s, by - 40 * s, x - 6 * s, by - 52 * s], fill=c["top"], width=int(11 * s))
-            d.rounded_rectangle([x - 12 * s, by - 66 * s, x + 2 * s, by - 46 * s], radius=3, fill=(180, 220, 255))
-        else:
-            d.line([x + sx * 22 * s, by - 40 * s, x + sx * 28 * s, by - 12 * s], fill=c["top"], width=int(11 * s))
-            d.ellipse([x + sx * 28 * s - 6 * s, by - 16 * s, x + sx * 28 * s + 6 * s, by - 4 * s], fill=c["skin"])
-    hy = by - 46 * s - 26 * s   # голова
-    R = 27 * s
-    if c["style"] == "long":
-        d.rounded_rectangle([x - R - 4 * s, hy - R, x + R + 4 * s, hy + R + 18 * s], radius=int(14 * s), fill=c["hair"])
-    d.ellipse([x - R, hy - R, x + R, hy + R], fill=c["skin"])
-    if c["style"] in ("short", "long"):
-        d.chord([x - R, hy - R - 2 * s, x + R, hy + R * .4], 180, 360, fill=c["hair"])
-    elif c["style"] == "bun":
-        d.chord([x - R, hy - R, x + R, hy + R * .3], 180, 360, fill=c["hair"])
-        d.ellipse([x - 10 * s, hy - R - 16 * s, x + 10 * s, hy - R + 4 * s], fill=c["hair"])
-    elif c["style"] == "bald":
-        d.chord([x - R + 4 * s, hy - 6 * s, x + R - 4 * s, hy + R + 6 * s], 0, 180, fill=(120, 90, 70))   # борода
-    ex = look * 4 * s
-    blink = (t + x * .01) % 3.3 < .1
-    for sx in (-1, 1):
-        if blink:
-            d.line([x + sx * 9 * s + ex - 3 * s, hy, x + sx * 9 * s + ex + 3 * s, hy], fill=(20, 20, 24), width=max(1, int(2 * s)))
-        else:
-            d.ellipse([x + sx * 9 * s + ex - 3 * s, hy - 3 * s, x + sx * 9 * s + ex + 3 * s, hy + 3 * s], fill=(20, 20, 24))
-    if face == "shock":
-        d.ellipse([x - 5 * s + ex, hy + 9 * s, x + 5 * s + ex, hy + 19 * s], fill=(80, 30, 30))
-    elif face == "smile":
-        d.arc([x - 9 * s + ex, hy + 4 * s, x + 9 * s + ex, hy + 16 * s], 20, 160, fill=(20, 20, 24), width=max(1, int(2 * s)))
-    elif face == "sad":
-        d.arc([x - 8 * s + ex, hy + 12 * s, x + 8 * s + ex, hy + 22 * s], 200, 340, fill=(20, 20, 24), width=max(1, int(2 * s)))
-    else:
-        d.line([x - 6 * s + ex, hy + 13 * s, x + 6 * s + ex, hy + 13 * s], fill=(20, 20, 24), width=max(1, int(2 * s)))
-
-
-def shovel(d, x, y, s=1.0):
-    d.line([x, y - 120 * s, x, y - 20 * s], fill=(150, 104, 60), width=int(7 * s))
-    d.polygon([(x - 14 * s, y - 24 * s), (x + 14 * s, y - 24 * s), (x + 10 * s, y + 6 * s), (x, y + 12 * s), (x - 10 * s, y + 6 * s)], fill=(160, 166, 174))
-
-
-# ---------- камера и экранные элементы ----------
 def ease(k):
     k = max(0.0, min(1.0, k))
     return k * k * (3 - 2 * k)
 
 
-def cam(img, c0, c1=None, k=0.0):
-    """c = (cx, cy, zoom) в координатах мира"""
+def V(wimg, c0, c1=None, k=0.0):
+    """камера: c = (cx, cy, zoom) в мировых координатах"""
     if c1:
         e = ease(k)
         c0 = tuple(a + (b - a) * e for a, b in zip(c0, c1))
-    cx, cy, z = c0
-    w, h = W / z, H / z
-    cx = min(max(cx, w / 2), WW - w / 2)
-    cy = min(max(cy, h / 2), WH - h / 2)
-    return img.resize((W, H), Image.BICUBIC, box=(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2))
+    return View(wimg, c0, W, H)
 
 
 def hud(img, days, money="0 ₽"):
@@ -353,11 +182,10 @@ UNDER = (970, 1020, 1.5)
 
 def s01(t, L, cue):
     p = (t - cue["01"]) / dur("01.mp3")
-    img = world(lights=True)
-    d = ImageDraw.Draw(img)
-    chibi(d, "me", 500, GR - 4, 1.0, t, "shock" if p > .45 else "neutral", 0, arm="phone")
-    glow(img, (494, GR - 116), 50, (150, 200, 255), .7)
-    img = cam(img, (500, 810, 2.0), HOUSE_BED, t / 1.2)
+    v = V(world(lights=True), (500, 810, 2.0), HOUSE_BED, t / 1.2)
+    chibi(v.d, "me", 500, GR - 4, 1.0, t, "shock" if p > .45 else "neutral", 0, arm="phone")
+    v.glow(498, GR - 120, 40, (120, 170, 255), .8)
+    img = v.out()
     if p > .05:
         msgs = ["Через 365 дней — конец."] + (["Строй бункер."] if p > .72 else [])
         sms_card(img, msgs, 180, fade_in(t, cue["01"] + .2))
@@ -368,10 +196,9 @@ def s01(t, L, cue):
 def s02(t, L, cue):
     p = (t - cue["02"]) / dur("02.mp3")
     off = p > .76
-    img = world(lights=not off)
-    d = ImageDraw.Draw(img)
-    chibi(d, "me", 720, GR - 4, 1.0, t, "shock" if off else "neutral", 0, arm="phone")
-    img = cam(img, (600, 800, 1.6), WIDE, t / 3)
+    v = V(world(lights=not off), (600, 800, 1.6), WIDE, t / 3)
+    chibi(v.d, "me", 760, GR - 4, 1.0, t, "shock" if off else "neutral", 0, arm="phone")
+    img = v.out()
     if not off:
         sms_card(img, ["Завтра в 14:00 в районе", "погаснет свет."], 180, fade_in(t, .1))
     pill(img, "14:00" if off else "13:59", W / 2, 400, (140, 30, 30) if off else (20, 22, 30), size=34)
@@ -381,27 +208,29 @@ def s02(t, L, cue):
 
 def s03(t, L, cue):
     p = (t - cue["03"]) / dur("03.mp3")
-    img = world()
-    d = ImageDraw.Draw(img)
+    v = V(world(), KITCHEN, (230, 800, 1.75), t / L)
+    d = v.d
     fam = (("mil", 120, "shock" if p > .45 else "neutral", 1), ("wife", 205, "sad" if p > .72 else "neutral", 1),
            ("son", 280, "neutral", 1), ("me", 335, "neutral", -1))
     for who, x, face, lk in fam:
         chibi(d, who, x, GR - 4, .8 if who == "son" else 1.0, t, face, lk)
-    img = cam(img, KITCHEN, (230, 800, 1.75), t / L)
+    img = v.out()
     for (who, x, *_), name in zip(fam, ("ТЁЩА", "ЖЕНА", "СЫН", "Я")):
-        sx = (x - 230) * 1.75 + W / 2
-        pill(img, name, sx, 380, size=22)
+        sx, sy = v.screen(x, GR + 14)
+        pill(img, name, sx, sy, size=22)
     if p > .45:
-        bubble(img, "сошёл с ума!", 170, 560)
+        bx, by = v.screen(120, GR - 150)
+        bubble(img, "сошёл с ума!", max(130, bx), by)
     if p > .72:
-        bubble(img, "…", 300, 540)
+        bx, by = v.screen(205, GR - 150)
+        bubble(img, "…", bx, by)
     hud(img, 364)
     return img
 
 
 def s04(t, L, cue):
     p = (t - cue["04"]) / dur("04.mp3")
-    img = cam(world(), GARAGE)
+    img = V(world(), GARAGE).out()
     rows = [("БУНКЕР НА 4", "5 000 000 ₽", 1.0, BLUE)]
     if p > .5:
         rows.append(("У МЕНЯ", "0 ₽", 0.0, RED))
@@ -424,9 +253,9 @@ def dashed_rect(d, box, col=(255, 206, 40), w=5, dash=22):
 
 def s05(t, L, cue):
     p = (t - cue["05"]) / dur("05.mp3")
-    img = world()
-    dashed_rect(ImageDraw.Draw(img), (PIT_X0, GR + 10, PIT_X1, GR + 350))
-    img = cam(img, GARAGE, UNDER, t / L)
+    v = V(world(), GARAGE, UNDER, t / L)
+    dashed_rect(v.d, (PIT_X0, GR + 10, PIT_X1, GR + 350))
+    img = v.out()
     rows = []
     for lab, show, col in (("ВОЗДУХ", .32, (120, 210, 255)), ("ВОДА", .45, BLUE), ("ЕДА НА ГОД", .58, GREEN)):
         if p > show:
@@ -441,9 +270,9 @@ def s05(t, L, cue):
 def s06(t, L, cue):
     p = (t - cue["06"]) / dur("06.mp3")
     k = min(1, max(0, (t - .3) / (L - .6)))
-    img = world(dug=.05 + .25 * k)
-    dashed_rect(ImageDraw.Draw(img), (PIT_X0, GR + 10, PIT_X1, GR + 350))
-    img = cam(img, UNDER)
+    v = V(world(dug=round(.05 + .25 * k, 2)), UNDER)
+    dashed_rect(v.d, (PIT_X0, GR + 10, PIT_X1, GR + 350))
+    img = v.out()
     pill(img, "1 м³ / день", W / 2 - 150, 250, size=30)
     if p > .45:
         pill(img, "нужно 60 м³", W / 2 + 140, 250, (30, 60, 110), size=30)
@@ -455,12 +284,11 @@ def s06(t, L, cue):
 
 def s07(t, L, cue):
     p = (t - cue["07"]) / dur("07.mp3")
-    img = world(day=True, lights=False, dug=.06)
-    d = ImageDraw.Draw(img)
-    shovel(d, 1040, GR - 4)
-    chibi(d, "me", 990, GR - 4, 1.0, t, "smile" if p > .75 else "neutral", 1)
-    chibi(d, "neigh", 1110, GR - 4, 1.0, t, "neutral", -1)
-    img = cam(img, (1050, 820, 1.7))
+    v = V(world(day=True, lights=False, dug=.06), (1050, 820, 1.7))
+    shovel(v.d, 1036, GR - 4)
+    chibi(v.d, "me", 990, GR - 4, 1.0, t, "smile" if p > .75 else "neutral", 1)
+    chibi(v.d, "neigh", 1110, GR - 4, 1.0, t, "neutral", -1)
+    img = v.out()
     pill(img, "ДЕНЬ 1", W / 2, 180, (20, 22, 30), YEL, 34)
     if .4 < p:
         bubble(img, "зачем?", W / 2 + 130, 520)
@@ -471,14 +299,11 @@ def s07(t, L, cue):
 
 
 def s08(t, L, cue):
-    img = world(dug=.3)
-    d = ImageDraw.Draw(img)
+    v = V(world(dug=.3, lights=False), GARAGE, (1400, 800, 1.5), t / 2.5)
     x = 1180 + 60 * min(1, t / 2)
-    chibi(d, "me", x, GR - 4, 1.0, t, "neutral", 1, walk=t < 2)
-    lay = Image.new("L", (WW, WH), 0)
-    ImageDraw.Draw(lay).polygon([(x + 20, GR - 70), (1560, GR - 300), (1600, GR - 10)], fill=70)
-    img.paste(Image.new("RGB", (WW, WH), (255, 240, 200)), (0, 0), lay.filter(ImageFilter.GaussianBlur(14)))
-    img = cam(img, GARAGE, (1400, 800, 1.5), t / 2.5)
+    chibi(v.d, "me", x, GR - 4, 1.0, t, "neutral", 1, walk=t < 2)
+    v.beam([(x + 24, GR - 70), (1560, GR - 300), (1600, GR - 10)], (255, 240, 200), 80, 10)
+    img = v.out()
     pill(img, "свалка · 03:40", W / 2, 180, size=30)
     pill(img, "бесплатно — до утра", W / 2, 250, (30, 80, 50), size=24)
     hud(img, 345)
@@ -486,10 +311,9 @@ def s08(t, L, cue):
 
 
 def s09(t, L, cue):
-    img = world(day=True, lights=False, dug=1.0, cont=True)
-    d = ImageDraw.Draw(img)
-    chibi(d, "me", 1060, GR - 4, 1.0, t, "smile", 0, arm="up")
-    img = cam(img, (970, 950, 1.7), UNDER, t / L)
+    v = V(world(day=True, lights=False, dug=1.0, cont=True), (970, 950, 1.7), UNDER, t / L)
+    chibi(v.d, "me", 1060, GR - 4, 1.0, t, "smile", 0, arm="up")
+    img = v.out()
     pill(img, "ДЕНЬ 40", W / 2, 180, (20, 22, 30), GREEN, 34)
     pill(img, "яма 60 м³ · контейнер", W / 2, 250, size=24)
     hud(img, 325)
@@ -501,13 +325,10 @@ def s10(t, L, cue):
     knocks = [cue["10"] + dur("10.mp3") * .32 + k * .55 for k in range(3)] + [vo_end + .3 + k * .5 for k in range(3)]
     n = sum(t > k for k in knocks)
     hit = any(0 <= t - k < .15 for k in knocks)
-    img = world(lights=False, dug=1.0, cont=True)
-    d = ImageDraw.Draw(img)
-    chibi(d, "me", 1020, GR + 336, 1.0, t, "shock" if n else "neutral", 1)
-    lay = Image.new("L", (WW, WH), 0)   # фонарик
-    ImageDraw.Draw(lay).polygon([(1040, GR + 250), (1190, GR + 160), (1190, GR + 340)], fill=90)
-    img.paste(Image.new("RGB", (WW, WH), (255, 236, 190)), (0, 0), lay.filter(ImageFilter.GaussianBlur(12)))
-    d = ImageDraw.Draw(img)
+    v = V(world(lights=False, dug=1.0, cont=True), UNDER, (1080, GR + 230, 1.8), (t - cue["10"]) / 3)
+    chibi(v.d, "me", 1030, GR + 340, 1.0, t, "shock" if n else "neutral", 1)
+    v.beam([(1046, GR + 260), (1190, GR + 170), (1190, GR + 340)], (255, 236, 190), 100, 8)
+    d = v.d
     wx, wy = PIT_X1, GR + 250
     rnd = random.Random(3)
     for i in range(n):   # трещины в стене
@@ -523,7 +344,7 @@ def s10(t, L, cue):
     k = min(1, max(0, (t - cue["10"]) / (L - cue["10"] - 2.0)))
     tx = WW - (WW - wx - 40) * k
     d.rectangle([tx, wy - 30, WW, wy + 30], fill=(10, 8, 8))
-    img = cam(img, UNDER, (1080, GR + 230, 1.8), (t - cue["10"]) / 3)
+    img = v.out()
     hud(img, 325)
     img = shake(img, t, 10 if hit else 0)
     if t > vo_end + 2.0:   # выбор — пиши в комментариях

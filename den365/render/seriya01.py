@@ -118,10 +118,10 @@ def blueprint(title=None):
     return img
 
 
-def phone_screen(img, t, msgs, y=330):
+def phone_screen(img, t, msgs, y=330, x0=120, x1=600):
     """крупный экран телефона с сообщениями"""
     d = ImageDraw.Draw(img)
-    x0, x1, y1 = 120, 600, y + 620
+    y1 = y + 560
     d.rounded_rectangle([x0, y, x1, y1], radius=40, fill=(16, 16, 20), outline=(60, 60, 66), width=8)
     d.rounded_rectangle([x0 + 20, y + 24, x1 - 20, y1 - 24], radius=26, fill=(236, 236, 240))
     d.text((x0 + 44, y + 44), "Отправитель:", font=F(20), fill=(120, 120, 126))
@@ -168,14 +168,14 @@ def container(d, x0, y0, x1, y1, col=(170, 70, 50)):
 # ---------- сцены ----------
 def s01(t, L, cue):   # ночь, телефон вибрирует в руке
     img = bg(ROOM_N, .7)
-    img = me(img, 470, .9, t, ("phone", "down"), "shock" if t > 2 else "neutral", (-.4, .4), phone="l", tint=(.75, .8, 1.0))
-    glow(img, (330, 760), 120, (160, 200, 255), .6)
+    img = me(img, 190, .9, t, ("phone", "down"), "shock" if t > 2 else "neutral", (-.4, .4), phone="l", tint=(.75, .8, 1.0))
+    glow(img, (90, 760), 120, (160, 200, 255), .6)
     p = (t - cue["01"]) / dur("01.mp3")
     if p > .12:
         msgs = ["Через 365 дней —\nконец."]
         if p > .7:
             msgs.append("Строй бункер.")
-        phone_screen(img, t, msgs, 300)
+        phone_screen(img, t, msgs, 560, 330, 690)
     hud(img, 365)
     return shake(img, t, 4 if t < .5 else 0)
 
@@ -186,10 +186,10 @@ def s02(t, L, cue):   # свет гаснет минута в минуту
     img = bg(STREET, .35 if off else 1.0)
     if off:
         img = Image.blend(img, Image.new("RGB", (W, H)), .5)
-    img = me(img, 360, .8, t, ("phone", "down"), "shock" if off else "neutral", (0, -.4), phone="l",
+    img = me(img, 190, .8, t, ("phone", "down"), "shock" if off else "neutral", (0, -.4), phone="l",
              tint=(.45, .45, .55) if off else (.8, .8, .95))
     if p < .78:
-        phone_screen(img, t, ["Завтра 14:00 —\nв районе\nпогаснет свет."], 260)
+        phone_screen(img, t, ["Завтра 14:00 —\nв районе\nпогаснет\nсвет."], 520, 330, 690)
     tag(img, "14:00" if off else "13:59", "минута в минуту" if off else "завтра", 1090, RED)
     hud(img, 364)
     return shake(img, t, 6 if .78 < p < .84 else 0)
@@ -209,7 +209,7 @@ def s03(t, L, cue):   # семья на кухне
         d.text((x - f.getlength(n) / 2, 506), n, font=f, fill=(255, 255, 255))
     if p > .45:
         tag(img, "тёща", "«ты сошёл с ума»", 1090, RED)
-    hud(img, 363)
+    hud(img, 364)
     return img
 
 
@@ -228,7 +228,7 @@ def s04(t, L, cue):
         d.polygon([(cx - 160, cy), (cx, cy - 90), (cx + 160, cy), (cx + 160, cy + 140), (cx - 160, cy + 140)], outline=ORANGE, width=6)
         d.rectangle([cx - 100, cy + 30, cx + 100, cy + 140], outline=ORANGE, width=6)
         d.text((cx + 180, cy + 60), "гараж", font=F(34, FONT_SUB), fill=ORANGE)
-    hud(img, 362)
+    hud(img, 364)
     return img
 
 
@@ -246,7 +246,7 @@ def s05(t, L, cue):
     if p > .85:
         f = F(40, FONT_SUB)
         d.text((W / 2 - f.getlength("стены — потом") / 2, 880), "стены — потом", font=f, fill=(200, 200, 206))
-    hud(img, 361)
+    hud(img, 364)
     return img
 
 
@@ -267,7 +267,7 @@ def s06(t, L, cue):
     if p > .7:
         f3 = F(56, FONT_SUB)
         d.text((W / 2 - f3.getlength("= 2 месяца") / 2, 930), "= 2 месяца", font=f3, fill=RED)
-    hud(img, 360)
+    hud(img, 364)
     return img
 
 

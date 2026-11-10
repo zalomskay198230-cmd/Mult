@@ -101,7 +101,26 @@ def s01(t, L, cue):
     if p > .55:
         G.tag(img, "рация", "на поясе · выключена", 1080)
     dplate(img, "40 м", "2:40")
-    return zoom(img, 1.0 + .06 * t / L, .5, .4)
+    img = zoom(img, 1.0 + .06 * t / L, .5, .4)
+    return choice_banner(img, t)
+
+
+def choice_banner(img, t, full=2.8):
+    """вставка: финал выбрали зрители — крупно в начале, потом маленькой плашкой"""
+    if t >= full:
+        G.tag(img, "ВЫБОР ЗРИТЕЛЕЙ", "слушать Олега", 130)
+        return img
+    a = min(1, t / .25, (full - t) / .3)
+    lay = img.copy()
+    d = ImageDraw.Draw(lay)
+    d.rectangle([0, 380, W, 780], fill=(8, 10, 14))
+    d.rectangle([0, 380, W, 388], fill=ORANGE)
+    d.rectangle([0, 772, W, 780], fill=ORANGE)
+    f1, f2, f3 = F(40, FONT_SUB), F(76, FONT_SUB), F(30)
+    for txt, f, y, col in (("ВЫ ВЫБРАЛИ", f1, 420, (200, 200, 206)), ("СЛУШАТЬ", f2, 490, ORANGE),
+                           ("ОЛЕГА", f2, 580, ORANGE), ("финал по вашему голосованию", f3, 700, (170, 170, 176))):
+        d.text(((W - f.getlength(txt)) / 2, y), txt, font=f, fill=col)
+    return Image.blend(img, lay, a)
 
 
 def s02(t, L, cue):

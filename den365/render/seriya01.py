@@ -20,11 +20,11 @@ LINES = {
     "07": "День первый. *Лопату* я одолжил у соседа. Он спросил — ^зачем^. Я сказал — *погреб*.",
     "08": "Бетон — дорого. Но на *свалке* за городом лежат списанные морские *контейнеры*. Сталь. Бесплатно — если вывезти до ^утра^.",
     "09": "День *сороковой*. Яма готова. Контейнер на месте. Я впервые поверил, что *успею*.",
-    "10": "А ночью из стены ямы раздался ^стук^. Кто-то *копал*. С той ^стороны^.",
+    "10": "А утром пришло второе *сообщение*. С моего ^номера^. «Бункер на четверых. Выживут ^трое^».",
 }
 PLAN = [(f"s{k}", [(k, 0.05)], 0.25) for k in LINES]
 PLAN[0] = ("s01", [("01", 0.35)], 0.3)
-PLAN[-1] = ("s10", [("10", 0.1)], 5.6)
+PLAN[-1] = ("s10", [("10", 0.1)], 3.4)
 setup(LINES, PLAN)
 
 F = lambda sz, f=FONT_B: ImageFont.truetype(f, sz)
@@ -133,7 +133,7 @@ def bubble(img, txt, x, y):
     d.text((x - w / 2, y - 52), txt, font=f, fill=(20, 20, 24))
 
 
-def sms_card(img, lines, y=170, a=1.0):
+def sms_card(img, lines, y=170, a=1.0, when="02:13"):
     lay = img.copy()
     d = ImageDraw.Draw(lay)
     x0, x1 = 60, W - 60
@@ -142,7 +142,7 @@ def sms_card(img, lines, y=170, a=1.0):
     d.rounded_rectangle([x0, y, x1, y + h], radius=22, fill=(246, 246, 248))
     d.ellipse([x0 + 22, y + 20, x0 + 70, y + 68], fill=(60, 120, 200))
     d.text((x0 + 86, y + 20), "МОЙ НОМЕР", font=F(26, FONT_SUB), fill=RED)
-    d.text((x0 + 86, y + 52), "сообщение · 02:13", font=F(18), fill=(140, 140, 146))
+    d.text((x0 + 86, y + 52), f"сообщение · {when}", font=F(18), fill=(140, 140, 146))
     for i, ln in enumerate(lines):
         d.text((x0 + 30, y + 88 + i * 42), ln, font=f, fill=(20, 20, 24))
     img.paste(Image.blend(img, lay, a))
@@ -321,60 +321,31 @@ def s09(t, L, cue):
 
 
 def s10(t, L, cue):
+    """утро: второе сообщение; камера уезжает к семье на кухне"""
     vo_end = cue["10"] + dur("10.mp3")
-    knocks = [cue["10"] + dur("10.mp3") * .32 + k * .55 for k in range(3)] + [vo_end + .3 + k * .5 for k in range(3)]
-    n = sum(t > k for k in knocks)
-    hit = any(0 <= t - k < .15 for k in knocks)
-    v = V(world(lights=False, dug=1.0, cont=True), UNDER, (1080, GR + 230, 1.8), (t - cue["10"]) / 3)
-    chibi(v.d, "me", 1030, GR + 340, 1.0, t, "shock" if n else "neutral", 1)
-    v.beam([(1046, GR + 260), (1190, GR + 170), (1190, GR + 340)], (255, 236, 190), 100, 8)
-    d = v.d
-    wx, wy = PIT_X1, GR + 250
-    rnd = random.Random(3)
-    for i in range(n):   # трещины в стене
-        a = rnd.uniform(-1.2, 1.2)
-        d.line([wx, wy, wx + 70 * math.cos(a) * (1 + i * .3), wy + 70 * math.sin(a) * (1 + i * .3)], fill=(14, 12, 12), width=5)
-    if n:
-        r = 6 + n * 4
-        d.ellipse([wx - r * .6, wy - r, wx + r * .6, wy + r], fill=(8, 6, 6))
-        for i in range(n * 5):   # осыпь
-            y = wy + r + ((t * 220 + i * 37) % 90)
-            d.ellipse([wx - 18 + i % 5 * 7, y, wx - 10 + i % 5 * 7, y + 6], fill=(90, 76, 64))
-    # тоннель «с той стороны» — виден только зрителю
-    k = min(1, max(0, (t - cue["10"]) / (L - cue["10"] - 2.0)))
-    tx = WW - (WW - wx - 40) * k
-    d.rectangle([tx, wy - 30, WW, wy + 30], fill=(10, 8, 8))
+    p = (t - cue["10"]) / dur("10.mp3")
+    v = V(world(day=True, lights=False, dug=1.0, cont=True), (1000, 820, 1.7), KITCHEN, max(0, t - vo_end + .6) / 2.2)
+    chibi(v.d, "me", 1060, GR - 4, 1.0, t, "shock" if p > .7 else "neutral", 0, arm="phone")
+    fam = (("mil", 120), ("wife", 205), ("son", 280))
+    for who, x in fam:
+        chibi(v.d, who, x, GR - 4, .8 if who == "son" else 1.0, t, "neutral", 1)
     img = v.out()
-    hud(img, 325)
-    img = shake(img, t, 10 if hit else 0)
-    if t > vo_end + 2.0:   # выбор — пиши в комментариях
-        a = fade_in(t, vo_end + 2.0, .4)
+    if p > .05:
+        msgs = ["Бункер на четверых."] + (["Выживут трое."] if p > .62 else [])
+        sms_card(img, msgs, 180, fade_in(t, cue["10"] + .2), "07:40")
+    if t > vo_end + .8:   # 4 → 3
+        a = fade_in(t, vo_end + .8, .3)
         lay = img.copy()
         dd = ImageDraw.Draw(lay)
-        for i, (title, sub, col) in enumerate((("ЗАСЫПАТЬ", "сделать вид, что не слышал", (90, 150, 220)),
-                                               ("КОПАТЬ", "навстречу. а если там тот,\nкто прислал сообщение?", RED))):
-            x0 = 40 + i * 330
-            dd.rounded_rectangle([x0, 200, x0 + 310, 470], radius=22, fill=(14, 16, 24), outline=col, width=4)
-            ft = F(34, FONT_SUB)
-            dd.text((x0 + 155 - ft.getlength(title) / 2, 330), title, font=ft, fill=WHITE)
-            fs = F(18)
-            for j, sl in enumerate(sub.split("\n")):
-                dd.text((x0 + 155 - fs.getlength(sl) / 2, 390 + j * 26), sl, font=fs, fill=(190, 190, 200))
-            dd.ellipse([x0 + 125, 225, x0 + 185, 285], fill=col)
-            dd.text((x0 + 155 - F(36, FONT_SUB).getlength(str(i + 1)) / 2, 232), str(i + 1), font=F(36, FONT_SUB), fill=WHITE)
-        dd.ellipse([W / 2 - 34, 300, W / 2 + 34, 368], fill=YEL)
-        dd.text((W / 2 - F(22, FONT_SUB).getlength("ИЛИ") / 2, 320), "ИЛИ", font=F(22, FONT_SUB), fill=(20, 20, 24))
-        fp = F(28, FONT_SUB)
-        txt = "ПИШИ В КОММЕНТАРИЯХ 1 ИЛИ 2"
-        dd.rounded_rectangle([W / 2 - fp.getlength(txt) / 2 - 22, 500, W / 2 + fp.getlength(txt) / 2 + 22, 556], radius=28, fill=YEL)
-        dd.text((W / 2 - fp.getlength(txt) / 2, 510), txt, font=fp, fill=(20, 20, 24))
+        f = F(120, FONT_SUB)
+        txt = "4 → 3"
+        dd.text(((W - f.getlength(txt)) / 2, 420), txt, font=f, fill=RED, stroke_width=8, stroke_fill=(8, 8, 10))
         img = Image.blend(img, lay, a)
-    return img
+    hud(img, 324)
+    return shake(img, t, 5 if .62 < p < .68 else 0)
 
 
 if __name__ == "__main__":
-    s0 = span("s10")[0] + .1
-    d10 = dur("10.mp3")
     run({n: globals()[n] for n, *_ in PLAN},
-        knocks=[s0 + d10 * .32 + k * .55 for k in range(3)] + [s0 + d10 + .3 + k * .5 for k in range(3)],
-        hits=[span("s02")[0] + .05 + dur("02.mp3") * .76, span("s01")[0] + .05])
+        hits=[span("s02")[0] + .05 + dur("02.mp3") * .76, span("s01")[0] + .05,
+              span("s10")[0] + .1 + dur("10.mp3") * .62])

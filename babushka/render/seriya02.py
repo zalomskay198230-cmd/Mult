@@ -36,10 +36,11 @@ LINES = {
     "10": "А вечером по радио объявили: найдено лекарство.",
     "11r": "Препарат действует только в первые десять суток после укуса.",
     "12": "Бабушку укусили девять дней назад. Где она — не знает никто. Есть только номер фургона: сорок семь.",
+    "13": "Подпишись. Скоро финал.",
 }
-PLAN = [(f"s{k}", [(k, 0.05)], 0.3) for k in LINES]
+PLAN = [(f"s{k}", [(k, 0.05)], 0.3) for k in LINES if k != "13"]
 PLAN[0] = ("s01", [("01", 0.3)], 0.3)
-PLAN[-1] = ("s12", [("12", 0.1)], 3.6)
+PLAN[-1] = ("s12", [("12", 0.1), ("13", None)], 1.6)
 setup(LINES, PLAN)
 
 F, GY, INK_ = B1.F, B1.GY, INK
@@ -258,14 +259,17 @@ def s12(t, L, cue):
     if p > .72:
         f = F(120, FONT_SUB)
         d.text(((W - f.getlength("№ 47")) / 2, 760), "№ 47", font=f, fill=(240, 70, 80), stroke_width=7, stroke_fill=INK)
-    if t > vo_end + .9:
-        a = min(1, (t - vo_end - .9) / .4)
+    t13 = cue["13"] - .25
+    if t > t13:
+        a = min(1, (t - t13) / .3)
         img = Image.blend(img, Image.new("RGB", (W, H)), a)
         if a >= 1:
             dd = ImageDraw.Draw(img)
-            f1, f2 = F(50, FONT_SUB), F(36, FONT_SUB)
-            dd.text(((W - f1.getlength("ЧАСТЬ 3")) / 2, 500), "ЧАСТЬ 3", font=f1, fill=(240, 240, 244))
-            dd.text(((W - f2.getlength("финал")) / 2, 576), "финал", font=f2, fill=(240, 70, 80))
+            f1, f2 = F(64, FONT_SUB), F(40, FONT_SUB)
+            pop = 1 + .05 * math.sin((t - t13) * 7)
+            f1 = F(int(64 * pop), FONT_SUB)
+            dd.text(((W - f1.getlength("ПОДПИШИСЬ")) / 2, 470), "ПОДПИШИСЬ", font=f1, fill=(240, 240, 244), stroke_width=4, stroke_fill=INK)
+            dd.text(((W - f2.getlength("скоро финал")) / 2, 566), "скоро финал", font=f2, fill=(240, 70, 80))
     return img
 
 

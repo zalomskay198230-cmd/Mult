@@ -61,8 +61,22 @@ def clock(img, txt, y=150, col=(240, 70, 80)):
     d.text((W - w - 55, y + 10), txt, font=f, fill=(255, 255, 255))
 
 
+_crowd = {}
+
+
 def crowd(img, t, n=26, y0=900, seed=4, scale=.36):
-    """молчащая толпа укушенных на поле"""
+    """молчащая толпа укушенных на поле (слой кешируется — люди стоят неподвижно)"""
+    key = (n, y0, seed, scale)
+    if key not in _crowd:
+        _crowd[key] = _crowd_layer(n, y0, seed, scale)
+    lay = _crowd[key]
+    img.paste(lay, (0, 0), lay)
+    return img
+
+
+def _crowd_layer(n, y0, seed, scale):
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    t = 1.0
     rnd = random.Random(seed)
     pts = sorted([(rnd.uniform(-40, W + 40), y0 + rnd.uniform(0, 300)) for _ in range(n)], key=lambda p: p[1])
     for x, y in pts:
@@ -72,7 +86,7 @@ def crowd(img, t, n=26, y0=900, seed=4, scale=.36):
         R, G, B = fig.convert("RGB").split()
         a = fig.getchannel("A")
         fig = Image.merge("RGBA", (R.point(lambda v: int(v * .55 + 20)), G.point(lambda v: int(v * .6 + 24)), B.point(lambda v: int(v * .65 + 30)), a))
-        img.paste(fig, (0, 0), fig)
+        img = Image.alpha_composite(img, fig)
     return img
 
 

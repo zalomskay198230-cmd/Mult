@@ -293,8 +293,42 @@ def pit(d, dug, cont):
 _cache = {}
 
 
-def world(day=False, lights=True, dug=0.0, cont=False):
-    key = (day, lights, round(dug, 2), cont)
+NB_X0, NB_X1 = 1300, 1560        # участок соседа (вместо свалки)
+
+
+def neighbor(img, d, reveal):
+    """участок соседа: забор, гараж, куча земли; reveal — видна ли его яма в разрезе"""
+    for x in range(1190, 1230, 13):   # забор между участками
+        d.polygon([(x, GR), (x, GR - 110), (x + 6, GR - 118), (x + 12, GR - 110), (x + 12, GR)], fill=(132, 100, 72), outline=dk((132, 100, 72), .7))
+    d.polygon([(1236, GR), (1262, GR - 70), (1300, GR - 96), (1336, GR - 60), (1356, GR)], fill=(108, 82, 62), outline=OUT)   # куча земли
+    for k_ in range(14):
+        rx = 1250 + (k_ * 37) % 100
+        d.ellipse([rx, GR - 50 + (k_ * 13) % 40, rx + 10, GR - 44 + (k_ * 13) % 40], fill=(86, 66, 50))
+    x0, x1, y0 = 1370, 1590, GR - 200
+    d.rectangle([x0, y0, x1, GR], fill=(70, 66, 62))
+    d.rectangle([x0 - 8, y0 - 8, x1 + 8, GR + 6], outline=SECT, width=16)
+    d.polygon([(x0 - 26, y0 - 8), (x1 + 26, y0 - 8), (x1 + 26, y0 - 32), (x0 - 26, y0 - 32)], fill=(110, 100, 96), outline=OUT)
+    d.rectangle([1400, GR - 150, 1520, GR - 2], fill=(96, 92, 88), outline=OUT, width=3)
+    for y in range(GR - 140, GR - 4, 14):
+        d.line([1404, y, 1516, y], fill=(80, 76, 72), width=3)
+    if reveal:   # яма соседа — глубже моей
+        depth = 470
+        d.rectangle([1380, GR + 10, 1580, GR + 10 + depth], fill=(48, 38, 36), outline=(96, 76, 64), width=5)
+        for y in range(int(GR + 40), int(GR + depth), 52):
+            d.line([1390, y, 1570, y + 4], fill=(58, 46, 42), width=3)
+        for x in (1386, 1566):
+            d.rectangle([x, GR + 10, x + 8, GR + depth], fill=(132, 96, 64))
+        for k_ in range(int(depth // 32)):
+            d.line([1540, GR + 24 + k_ * 32, 1570, GR + 24 + k_ * 32], fill=(170, 124, 74), width=5)
+        d.line([1540, GR - 20, 1540, GR + depth], fill=(170, 124, 74), width=7)
+        d.line([1570, GR - 20, 1570, GR + depth], fill=(170, 124, 74), width=7)
+    else:        # брезент на земле над ямой
+        d.polygon([(1376, GR - 4), (1584, GR - 4), (1580, GR + 8), (1380, GR + 8)], fill=(60, 96, 70), outline=OUT)
+
+
+def world(day=False, lights=True, dug=0.0, cont=False, nb=None):
+    """nb: None — свалка справа; 'hidden'/'open' — участок соседа (яма спрятана / видна)"""
+    key = (day, lights, round(dug, 2), cont, nb)
     if key in _cache:
         return _cache[key]
     top, bot = ((120, 170, 222), (206, 226, 242)) if day else ((8, 12, 28), (30, 40, 70))
@@ -311,7 +345,10 @@ def world(day=False, lights=True, dug=0.0, cont=False):
     fence(d, 650, 790)
     garage(img, d, lights and not day)
     d = SD(img)
-    scrapyard(img, d, not day)
+    if nb:
+        neighbor(img, d, nb == "open")
+    else:
+        scrapyard(img, d, not day)
     pit(d, dug, cont)
     if len(_cache) > 10:
         _cache.clear()

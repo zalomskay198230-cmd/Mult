@@ -128,7 +128,7 @@ if __name__ == "__main__":
     wav = out + ".wav"   # «вжух» ракеты + лёгкий гул
     subprocess.check_call(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i",
                            f"anoisesrc=color=pink:amplitude=0.5:d={L}", "-af",
-                           f"highpass=f=300,lowpass=f=4000,volume='0.9*exp(-((t-0.5)*2.2)^2)+0.05':eval=frame,afade=t=out:st={L-.4}:d=.4",
+                           f"highpass=f=300,lowpass=f=4000,volume='0.9*exp(-((t-0.5)*2.2)^2)+0.05':eval=frame,afade=t=out:st={L-.4:.2f}:d=0.4",
                            "-ar", "44100", "-ac", "2", wav])
     ff = subprocess.Popen(["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS),
                            "-i", "-", "-i", wav, "-c:v", "libx264", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", out],

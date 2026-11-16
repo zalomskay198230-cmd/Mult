@@ -7,6 +7,7 @@ import os, sys, subprocess, json
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AD = os.path.join(HERE, "..", "ad", "klassvpn_popup_vertical_green.mp4")
+BADGE = os.environ.get("AD_BADGE", os.path.join(HERE, "..", "ad", "klassvpn_badge.png"))   # значок на всё видео ("" — без него)
 VOICE = os.environ.get("AD_VOICE", os.path.join(HERE, "..", "ad", "klassvpn_voice_fit.mp3"))   # озвучка рекламы ("" — без голоса)
 
 
@@ -54,7 +55,15 @@ fc = (
 )
 if mode == "freeze":
     fc = fc_freeze
-extra = ["-i", VOICE] if (VOICE and mode == "freeze") else []
+if BADGE:   # значок-плашка справа под шкалами, на всё видео
+    n_in = 3 if (VOICE and mode == "freeze") else 2
+    fc = fc.replace("[v1][a1m][v3][a3]concat=n=2:v=1:a=1[v][a0]", "[v1][a1m][v3][a3]concat=n=2:v=1:a=1[vc][a0]") \
+           .replace("[vb][ad]overlay=0:-{}:eof_action=pass".format(shift), "[vb][ad]overlay=0:-{}:eof_action=pass".format(shift))
+    if "[vc]" in fc:
+        fc += f";[vc][{n_in}:v]overlay=W-w-25:133[v]"
+    else:
+        fc = fc.replace("[v];", "[vc];", 1) + f";[vc][{n_in}:v]overlay=W-w-25:133[v]"
+extra = (["-i", VOICE] if (VOICE and mode == "freeze") else []) + (["-i", BADGE] if BADGE else [])
 subprocess.check_call(["ffmpeg", "-y", "-v", "error", "-i", src, "-i", AD] + extra + ["-filter_complex", fc, "-map", "[v]", "-map", "[a]",
                        "-c:v", "libx264", "-crf", "21", "-preset", "medium", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k",
                        "-movflags", "+faststart", out])

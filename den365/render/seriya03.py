@@ -65,7 +65,7 @@ def big_hud(img, days, k=1.0):
     return Image.blend(img, lay, k)
 
 
-def choice_banner(img, t, txt, full):
+def choice_banner(img, t, txt, full, sub="вариант №2 из комментариев"):
     if t >= full:
         return img
     a = min(1, t / .15, (full - t) / .25)
@@ -74,7 +74,7 @@ def choice_banner(img, t, txt, full):
     d.rectangle([0, 420, W, 760], fill=(10, 12, 18))
     d.rectangle([0, 420, W, 428], fill=YEL); d.rectangle([0, 752, W, 760], fill=YEL)
     f1, f2, f3 = F(40, FONT_SUB), F(80, FONT_SUB), F(26)
-    for s_, f, y, col in (("ВЫ ВЫБРАЛИ", f1, 460, (200, 200, 206)), (txt, f2, 525, YEL), ("вариант №2 из комментариев", f3, 660, (170, 170, 176))):
+    for s_, f, y, col in (("ВЫ ВЫБРАЛИ", f1, 460, (200, 200, 206)), (txt, f2, 525, YEL), (sub, f3, 660, (170, 170, 176))):
         d.text(((W - f.getlength(s_)) / 2, y), s_, font=f, fill=col)
     return Image.blend(img, lay, a)
 

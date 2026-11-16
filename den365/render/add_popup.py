@@ -1,6 +1,8 @@
-"""Всплывающая реклама поверх готовой серии (хромакей зелёной плашки) + ускорение куска под ней.
-python3 add_popup.py <серия.mp4> <выход.mp4> <старт_сек> [сдвиг_вверх_px=340] [ускорение=1.1] [громкость_рекламы=0.5]
-Кусок серии длиной (длина_плашки × ускорение) с момента старта ускоряется, поэтому общая длина почти не растёт."""
+"""Всплывающая реклама в готовую серию (хромакей зелёной плашки).
+python3 add_popup.py <серия.mp4> <выход.mp4> <старт_сек> [сдвиг_вверх_px=250] [режим=freeze] [громкость_рекламы=0.9]
+freeze — как в примере: после фразы мультик замирает (стоп-кадр, рассказ на паузе), поверх идёт плашка со своим звуком,
+         потом история продолжается. Серия становится длиннее на длину плашки.
+speed  — мультик идёт под плашкой, кусок ускорен в 1.1 раза (старый вариант)."""
 import os, sys, subprocess, json
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -12,11 +14,24 @@ def dur(p):
 
 
 src, out, T = sys.argv[1], sys.argv[2], float(sys.argv[3])
-shift = int(sys.argv[4]) if len(sys.argv) > 4 else 340
-k = float(sys.argv[5]) if len(sys.argv) > 5 else 1.1
-vol = float(sys.argv[6]) if len(sys.argv) > 6 else 0.5
+shift = int(sys.argv[4]) if len(sys.argv) > 4 else 250
+mode = sys.argv[5] if len(sys.argv) > 5 else "freeze"
+vol = float(sys.argv[6]) if len(sys.argv) > 6 else 0.9
 D = dur(AD)
-T2 = T + D * k          # конец ускоряемого куска в исходнике
+k = 1.1
+T2 = T + D * k          # конец ускоряемого куска в исходнике (режим speed)
+
+fc_freeze = (
+    f"[0:v]trim=0:{T},setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration={D}[vb0];"
+    f"[0:v]trim={T},setpts=PTS-STARTPTS[v3];"
+    f"[0:a]atrim=0:{T},asetpts=PTS-STARTPTS,apad=pad_dur={D}[a1];"
+    f"[0:a]atrim={T},asetpts=PTS-STARTPTS[a3];"
+    f"[1:v]scale=720:1280,chromakey=0x00d700:0.18:0.08,setpts=PTS-STARTPTS+{T}/TB[ad];"
+    f"[vb0][ad]overlay=0:-{shift}:eof_action=pass:enable='between(t,{T},{T + D})'[v1];"
+    f"[1:a]volume={vol},adelay={int(T * 1000)}|{int(T * 1000)}[ada];"
+    f"[a1][ada]amix=inputs=2:normalize=0:duration=first[a1m];"
+    f"[v1][a1m][v3][a3]concat=n=2:v=1:a=1[v][a0];[a0]alimiter=limit=0.95[a]"
+)
 
 fc = (
     f"[0:v]trim=0:{T},setpts=PTS-STARTPTS[v1];"
@@ -32,6 +47,8 @@ fc = (
     f"[1:a]volume={vol},adelay={int(T * 1000)}|{int(T * 1000)}[ada];"
     f"[ab][ada]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95[a]"
 )
+if mode == "freeze":
+    fc = fc_freeze
 subprocess.check_call(["ffmpeg", "-y", "-v", "error", "-i", src, "-i", AD, "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
                        "-c:v", "libx264", "-crf", "21", "-preset", "medium", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k",
                        "-movflags", "+faststart", out])

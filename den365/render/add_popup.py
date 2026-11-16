@@ -7,6 +7,7 @@ import os, sys, subprocess, json
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AD = os.path.join(HERE, "..", "ad", "klassvpn_popup_vertical_green.mp4")
+VOICE = os.environ.get("AD_VOICE", os.path.join(HERE, "..", "ad", "klassvpn_voice_fit.mp3"))   # озвучка рекламы ("" — без голоса)
 
 
 def dur(p):
@@ -28,9 +29,13 @@ fc_freeze = (
     f"[0:a]atrim={T},asetpts=PTS-STARTPTS[a3];"
     f"[1:v]scale=720:1280,chromakey=0x00d700:0.18:0.08,setpts=PTS-STARTPTS+{T}/TB[ad];"
     f"[vb0][ad]overlay=0:-{shift}:eof_action=pass:enable='between(t,{T},{T + D})'[v1];"
-    f"[1:a]volume={vol},adelay={int(T * 1000)}|{int(T * 1000)}[ada];"
-    f"[a1][ada]amix=inputs=2:normalize=0:duration=first[a1m];"
-    f"[v1][a1m][v3][a3]concat=n=2:v=1:a=1[v][a0];[a0]alimiter=limit=0.95[a]"
+    + (f"[1:a]volume={vol * .45},adelay={int(T * 1000)}|{int(T * 1000)}[ada];"
+       f"[2:a]volume=1.5,adelay={int(T * 1000) + 250}|{int(T * 1000) + 250}[vo];"
+       f"[a1][ada][vo]amix=inputs=3:normalize=0:duration=first[a1m];"
+       if VOICE else
+       f"[1:a]volume={vol},adelay={int(T * 1000)}|{int(T * 1000)}[ada];"
+       f"[a1][ada]amix=inputs=2:normalize=0:duration=first[a1m];")
+    + f"[v1][a1m][v3][a3]concat=n=2:v=1:a=1[v][a0];[a0]alimiter=limit=0.95[a]"
 )
 
 fc = (
@@ -49,7 +54,8 @@ fc = (
 )
 if mode == "freeze":
     fc = fc_freeze
-subprocess.check_call(["ffmpeg", "-y", "-v", "error", "-i", src, "-i", AD, "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
+extra = ["-i", VOICE] if (VOICE and mode == "freeze") else []
+subprocess.check_call(["ffmpeg", "-y", "-v", "error", "-i", src, "-i", AD] + extra + ["-filter_complex", fc, "-map", "[v]", "-map", "[a]",
                        "-c:v", "libx264", "-crf", "21", "-preset", "medium", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k",
                        "-movflags", "+faststart", out])
 print("готово:", out, f"{dur(out):.2f} c (было {dur(src):.2f})")

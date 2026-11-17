@@ -139,6 +139,7 @@ def build_timur():
     neck = empty("neck", (0, 0, 1.42), root)
     head = sphere("head", (0, 0, .36), (.36, .34, .38), "skin", neck)
     hair = sphere("hair", (0, .02, .5), (.37, .35, .3), "hair", neck)
+    sphere("hair_back", (0, .1, .38), (.36, .3, .32), "hair", neck)
     beard = sphere("beard", (0, -.06, .17), (.32, .29, .2), "beard", neck)
     nose = sphere("nose", (0, -.34, .36), (.06, .05, .06), "skin", neck)
     eyes = []
@@ -265,8 +266,41 @@ def build_box():
     return root
 
 
+def build_junk():
+    """хлам до потолка внутри фургона (серия 1); убирается по ходу ремонта"""
+    root = empty("junk", (0, 0, 0))
+    rnd = random.Random(11)
+    cols = ("wood", "apron", "dark", "red", "steel")
+    for i in range(26):   # коробки штабелями
+        x, y = rnd.uniform(-1.6, 1.6), rnd.uniform(-.2, 1.0)
+        z = rnd.uniform(.0, 1.6)
+        w_ = rnd.uniform(.3, .6)
+        cube(f"jbox{i}", (x, y, z + w_ / 2), (w_, w_ * .9, w_ * .8), "wood" if i % 3 else "apron", .02, root,
+             rot=(0, 0, math.radians(rnd.uniform(-25, 25))))
+    for i in range(4):    # шины
+        bpy.ops.mesh.primitive_torus_add(major_radius=.32, minor_radius=.12, location=(-1.1 + i * .15, .2, .12 + i * .24))
+        o = bpy.context.object; o.data.materials.append(M["dark"]); shade_smooth(o); o.parent = root
+    cube("mattress", (.9, .1, .9), (.9, .25, 1.6), "glass", .1, root, rot=(math.radians(-12), 0, math.radians(8)))
+    cube("matt2", (.9, .1, .9), (.92, .2, 1.62), "apron", .1, root, rot=(math.radians(-12), 0, math.radians(8)))
+    for i in range(6):    # тряпки, мешки
+        sphere(f"bag{i}", (rnd.uniform(-1.4, 1.4), rnd.uniform(-.4, .6), rnd.uniform(.1, .4)), (.28, .22, .18), ("hood", "pants", "grout")[i % 3], root)
+    return root
+
+
+def build_calendar():
+    root = empty("calendar", (0, 0, 0))
+    cube("cal_b", (-1.25, 1.16, 1.5), (.5, .02, .7), "apron", .01, root)
+    cube("cal_top", (-1.25, 1.15, 1.8), (.5, .02, .12), "red", .01, root)
+    for r in range(4):
+        for c in range(5):
+            cube(f"cal_{r}{c}", (-1.43 + c * .09, 1.145, 1.62 - r * .12), (.06, .01, .06), "grout", 0, root)
+    return root
+
+
 build_truck()
 build_street()
+JUNK = build_junk()
+CAL = build_calendar()
 BOX = build_box()
 BOX.location = (.55, .38, 0)
 T = build_timur()
@@ -319,45 +353,47 @@ def sc_s02(t, L, sc):   # фургон крупнее, «вах»
     cam((34.6, -4.2, 1.6), (31.8, .9, 1.1), 30)
 
 
-def sc_s03(t, L, sc):   # внутри: «решаете вы» — показывает на зрителя
-    T["root"].location = (0, -.3, 0); T["root"].rotation_euler = (0, 0, 0)
+def sc_s03(t, L, sc):   # у фургона: «решаете вы» — показывает на зрителя
+    sky(True)
+    T["root"].location = (30.2, -1.0, 0); T["root"].rotation_euler = (0, 0, 0)
     pose(T, t, ("down", "front"), smile=True, talk=talking(sc, t))
-    cam((0, -2.3, 1.62), (0, .2, 1.5), 34)
+    cam((30.2, -3.3, 1.65), (30.2, -.6, 1.5), 32)
 
 
-def sc_s04(t, L, sc):   # «лайк = 10 ₽» — машет
-    T["root"].location = (0, -.1, 0); T["root"].rotation_euler = (0, 0, 0)
+def sc_s04(t, L, sc):   # у фургона: «лайк = 10 ₽» — машет
+    sky(True)
+    T["root"].location = (30.0, -1.0, 0); T["root"].rotation_euler = (0, 0, 0)
     pose(T, t, ("wave", "up") if t > L * .5 else ("down", "wave"), smile=True, talk=talking(sc, t))
-    cam((0, -3.0, 1.45), (0, .3, 1.3), 32)
+    cam((30.0, -4.2, 1.5), (30.3, .2, 1.3), 30)
 
 
-def sc_s05(t, L, sc):   # лезет под прилавок, находит ящик
-    p = t / L
-    crouch = min(1, p / .3)
-    T["root"].location = (-.2, .0, -.55 * crouch); T["root"].rotation_euler = (0, 0, math.radians(-20 * crouch))
-    pose(T, t, ("front", "front") if p > .3 else ("down", "down"), smile=False, talk=talking(sc, t))
-    show(BOX, p > .3)
-    cam((-.9, -3.0, 1.15), (.15, .3, .7), 30)
+def sc_s05(t, L, sc):   # открывает дверь — внутри хлам до потолка
+    show(JUNK, True)
+    k = min(1, t / 1.0)
+    T["root"].location = (.5, -1.7, 0); T["root"].rotation_euler = (0, 0, math.radians(160))
+    pose(T, t, ("up", "up") if t > L * .55 else ("down", "front"), smile=False, talk=talking(sc, t))
+    cam((-.4, -5.2 + .6 * k, 2.1), (0, .4, 1.0), 28)
 
 
-def sc_s06(t, L, sc):   # крупно ящик
-    show(BOX, True)
-    T["root"].location = (-1.6, -.4, -3)   # героя убираем из кадра
-    cam((.55, -.55, 1.15 - .1 * min(1, t / L)), (.55, .38, .25), 34)
+def sc_s06(t, L, sc):   # календарь 1998 на стене (крупно, хлам не мешает)
+    show(JUNK, False)
+    T["root"].location = (-1.6, -.4, -3)
+    z = 1.0 + .15 * min(1, t / L)
+    cam((-1.25, .2, 1.55), (-1.25, 1.16, 1.55), 30 * z)
 
 
-def sc_s07(t, L, sc):
-    show(BOX, True)
-    T["root"].location = (0, -.1, 0); T["root"].rotation_euler = (0, 0, 0)
+def sc_s07(t, L, sc):   # вопросы зрителям — на фоне хлама
+    show(JUNK, True)
+    T["root"].location = (0, -1.0, 0); T["root"].rotation_euler = (0, 0, 0)
     pose(T, t, ("down", "hip"), smile=False, talk=talking(sc, t), look=10 * math.sin(t))
-    cam((0, -3.3, 1.4), (0, .3, 1.25), 30)
+    cam((0, -3.6, 1.4), (0, .3, 1.25), 30)
 
 
 def sc_s08(t, L, sc):
-    show(BOX, True)
-    T["root"].location = (0, -.1, 0); T["root"].rotation_euler = (0, 0, 0)
+    show(JUNK, True)
+    T["root"].location = (0, -1.0, 0); T["root"].rotation_euler = (0, 0, 0)
     pose(T, t, ("wave", "wave"), smile=True, talk=talking(sc, t))
-    cam((0, -3.3, 1.4), (0, .3, 1.25), 30)
+    cam((0, -3.6, 1.4), (0, .3, 1.25), 30)
 
 
 if MODE == "scenes":
@@ -377,7 +413,7 @@ if MODE == "scenes":
             out = os.path.join(outdir, f"{name}_{f:04d}.png")
             if os.path.exists(out):
                 continue
-            show(BOX, False)
+            show(BOX, False); show(JUNK, False)
             sky(False)
             fn(f / FPS3D, L, sc)
             S.render.filepath = out
@@ -401,7 +437,7 @@ if MODE == "peek":   # по одному кадру из каждой сцены
     S.render.resolution_percentage = 50
     os.makedirs(outdir, exist_ok=True)
     for sc in TL["scenes"]:
-        show(BOX, False)
+        show(BOX, False); show(JUNK, False)
         sky(False)
         globals()["sc_" + sc["name"]](sc["length"] * .6, sc["length"], sc)
         S.render.filepath = os.path.join(outdir, sc["name"] + ".png")

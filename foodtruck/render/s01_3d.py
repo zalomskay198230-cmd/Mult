@@ -34,9 +34,9 @@ LINES = {
     "02": "*Сорок* *тысяч* рублей. Девяносто восьмого года. Без одной ^фары^. Вах, *красавец*.",
     "03": "Поэтому теперь всё решаете *вы*, дорогие.",
     "04": "Каждый ваш *лайк* — *десять* *рублей* в кассу. Лайкнул — помог. Клянусь, всё на кухню пойдёт.",
-    "05": "А потом я полез под прилавок. И нашёл ^ящик^. Железный. С замком.",
-    "06": "На крышке наклейка: «Рецепт номер *семь*. Не готовить после ^полуночи^».",
-    "07": "Что готовим первым — *шаурму*, *бургеры* или *пельмени*? И ящик открывать или нет?",
+    "05": "Открываю дверь — а там ^хлам^. До потолка. Шины, коробки, старый матрас. *Вах*.",
+    "06": "Прежний хозяин, похоже, здесь *жил*. Даже календарь на стене — девяносто ^восьмого^ года.",
+    "07": "Что готовим первым — *шаурму*, *бургеры* или *пельмени*? И с чего начинаем ремонт — *пол*, *плита* или *окно*?",
     "08": "Пишите в *комментариях*, дорогие. Как скажете — так и сделаю.",
 }
 PLAN = [(f"s{k}", [(k, 0.05)], 0.15) for k in LINES]
@@ -139,11 +139,108 @@ def vote_cards(img, a=1.0):
         d.text((130 - F(34, FONT_SUB).getlength(str(i + 1)) / 2, y + 8), str(i + 1), font=F(34, FONT_SUB), fill=WHITE)
         d.text((186, y + 8), txt, font=F(40, FONT_SUB), fill=WHITE)
     d.rounded_rectangle([60, 590, W - 60, 750], radius=22, fill=(16, 18, 26), outline=(110, 150, 210), width=4)
-    d.text(((W - f0.getlength("ЯЩИК ОТКРЫВАТЬ?")) / 2, 608), "ЯЩИК ОТКРЫВАТЬ?", font=f0, fill=WHITE)
-    for i, (txt, col) in enumerate((("ДА", (60, 170, 90)), ("НЕТ", (200, 50, 50)))):
-        x0 = 150 + i * 240
-        d.rounded_rectangle([x0, 664, x0 + 180, 728], radius=14, fill=col)
-        d.text((x0 + 90 - F(36, FONT_SUB).getlength(txt) / 2, 674), txt, font=F(36, FONT_SUB), fill=WHITE)
+    d.text(((W - f0.getlength("РЕМОНТ: С ЧЕГО?")) / 2, 608), "РЕМОНТ: С ЧЕГО?", font=f0, fill=WHITE)
+    for i, (txt, col) in enumerate((("ПОЛ", (150, 110, 70)), ("ПЛИТА", (120, 124, 132)), ("ОКНО", (90, 150, 220)))):
+        x0 = 90 + i * 186
+        d.rounded_rectangle([x0, 664, x0 + 170, 728], radius=14, fill=col)
+        d.text((x0 + 85 - F(32, FONT_SUB).getlength(txt) / 2, 676), txt, font=F(32, FONT_SUB), fill=WHITE)
+    return Image.blend(img, lay, a)
+
+
+# ---------- сцены ----------
+def s01(t, L, cue):
+    p = (t - cue["01"]) / dur("01.mp3")
+    img = frame3d("s01", t)
+    pill(img, "ПН: УВОЛЕН" if p < .45 else "ВТ: КУПИЛ ФУРГОН", W / 2, 200, (150, 30, 36) if p < .45 else (30, 110, 60), WHITE, 34)
+    stamp(img, "УВОЛЕН!", t, .4, RED, 300) if p < .45 else None
+    stream_ui(img, t)
+    return img
+
+
+def s02(t, L, cue):
+    p = (t - cue["02"]) / dur("02.mp3")
+    img = frame3d("s02", t)
+    pill(img, "−40 000 ₽", W / 2, 200, (150, 30, 36), WHITE, 40)
+    if p > .45:
+        pill(img, "1998 · без фары", W / 2, 280, (20, 22, 30), YEL, 28)
+    if p > .75:
+        stamp(img, "ВАХ!", t, cue["02"] + dur("02.mp3") * .75, YEL, 360)
+    stream_ui(img, t)
+    return img
+
+
+def s03(t, L, cue):
+    img = frame3d("s03", t)
+    pill(img, "РЕШАЕТЕ ВЫ", W / 2, 210, (20, 22, 30), YEL, 46)
+    stream_ui(img, t)
+    return img
+
+
+def s04(t, L, cue):
+    p = (t - cue["04"]) / dur("04.mp3")
+    img = frame3d("s04", t)
+    d = ImageDraw.Draw(img)
+    cx, cy = W / 2, 300
+    r = 64 * (1 + .08 * abs(math.sin(t * 6)))
+    d.ellipse([cx - r, cy - r * .7, cx, cy + r * .3], fill=(240, 50, 70))
+    d.ellipse([cx, cy - r * .7, cx + r, cy + r * .3], fill=(240, 50, 70))
+    d.polygon([(cx - r * .97, cy - r * .05), (cx + r * .97, cy - r * .05), (cx, cy + r * .95)], fill=(240, 50, 70))
+    f = F(50, FONT_SUB)
+    d.text((cx - f.getlength("1 ЛАЙК = 10 ₽") / 2, 400), "1 ЛАЙК = 10 ₽", font=f, fill=WHITE, stroke_width=5, stroke_fill=(14, 12, 16))
+    for i in range(6):
+        k = ((t * .9) + i / 6) % 1
+        x = cx + (W - 180 - cx) * k + 30 * math.sin(i * 2 + t * 3)
+        y = cy - (cy - 90) * k
+        d.text((x, y), "+10 ₽", font=F(26, FONT_SUB), fill=GREEN, stroke_width=3, stroke_fill=(14, 12, 16))
+    if p > .45:
+        pill(img, "ЛАЙКНУЛ — ПОМОГ", W / 2, 500, (214, 30, 40), WHITE, 32)
+    stream_ui(img, t)
+    return img
+
+
+def s05(t, L, cue):
+    p = (t - cue["05"]) / dur("05.mp3")
+    img = frame3d("s05", t)
+    if p > .2:
+        stamp(img, "ХЛАМ!", t, cue["05"] + dur("05.mp3") * .2, RED, 260, -6)
+    if p > .5:
+        pill(img, "шины · коробки · матрас", W / 2, 420, (20, 22, 30), WHITE, 28)
+    stream_ui(img, t)
+    return shake(img, t, 4 if .2 < p < .26 else 0)
+
+
+def s06(t, L, cue):
+    p = (t - cue["06"]) / dur("06.mp3")
+    img = frame3d("s06", t)
+    if p > .55:   # год на календаре
+        f = F(150, FONT_SUB)
+        ImageDraw.Draw(img).text(((W - f.getlength("1998")) / 2, 250), "1998", font=f, fill=(200, 40, 40), stroke_width=6, stroke_fill=(250, 246, 236))
+        if p > .7:
+            d = ImageDraw.Draw(img)
+            for i, (qx, qy) in enumerate(((90, 520), (600, 480))):
+                if int(t * 3 + i) % 3:
+                    d.text((qx, qy), "?", font=F(90, FONT_SUB), fill=YEL, stroke_width=5, stroke_fill=(14, 12, 16))
+    stream_ui(img, t)
+    return img
+
+
+def vote_cards(img, a=1.0):
+    lay = img.copy()
+    d = ImageDraw.Draw(lay)
+    d.rounded_rectangle([60, 210, W - 60, 560], radius=22, fill=(16, 18, 26), outline=(110, 150, 210), width=4)
+    f0 = F(34, FONT_SUB)
+    d.text(((W - f0.getlength("ЧТО ГОТОВИМ?")) / 2, 230), "ЧТО ГОТОВИМ?", font=f0, fill=WHITE)
+    for i, (txt, col) in enumerate((("ШАУРМА", (230, 140, 50)), ("БУРГЕРЫ", (210, 60, 60)), ("ПЕЛЬМЕНИ", (90, 150, 220)))):
+        y = 296 + i * 84
+        d.ellipse([100, y, 160, y + 60], fill=col)
+        d.text((130 - F(34, FONT_SUB).getlength(str(i + 1)) / 2, y + 8), str(i + 1), font=F(34, FONT_SUB), fill=WHITE)
+        d.text((186, y + 8), txt, font=F(40, FONT_SUB), fill=WHITE)
+    d.rounded_rectangle([60, 590, W - 60, 750], radius=22, fill=(16, 18, 26), outline=(110, 150, 210), width=4)
+    d.text(((W - f0.getlength("РЕМОНТ: С ЧЕГО?")) / 2, 608), "РЕМОНТ: С ЧЕГО?", font=f0, fill=WHITE)
+    for i, (txt, col) in enumerate((("ПОЛ", (150, 110, 70)), ("ПЛИТА", (120, 124, 132)), ("ОКНО", (90, 150, 220)))):
+        x0 = 90 + i * 186
+        d.rounded_rectangle([x0, 664, x0 + 170, 728], radius=14, fill=col)
+        d.text((x0 + 85 - F(32, FONT_SUB).getlength(txt) / 2, 676), txt, font=F(32, FONT_SUB), fill=WHITE)
     return Image.blend(img, lay, a)
 
 
@@ -252,4 +349,4 @@ def s08(t, L, cue):
 
 if __name__ == "__main__":
     run({n: globals()[n] for n, *_ in PLAN},
-        hits=[span("s01")[0] + .4, span("s05")[0] + span("s05")[1] * .35])
+        hits=[span("s01")[0] + .4, span("s05")[0] + span("s05")[1] * .2])

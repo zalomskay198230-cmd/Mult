@@ -36,7 +36,7 @@ LINES = {
     "04": "Каждый ваш *лайк* — *десять* *рублей* в кассу. Лайкнул — помог. Клянусь, всё на кухню пойдёт.",
     "05": "Открываю дверь — а там ^хлам^. До потолка. Шины, коробки, старый матрас. *Вах*.",
     "06": "Прежний хозяин, похоже, здесь *жил*. Даже календарь на стене — девяносто ^восьмого^ года.",
-    "07": "Что готовим первым — *шаурму*, *бургеры* или *пельмени*? И с чего начинаем ремонт — *пол*, *плита* или *окно*?",
+    "07": "С чего начинаем *ремонт*? *Пол*, *плита* или *окно*?",
     "08": "Пишите в *комментариях*, дорогие. Как скажете — так и сделаю.",
 }
 PLAN = [(f"s{k}", [(k, 0.05)], 0.15) for k in LINES]
@@ -128,22 +128,17 @@ def money_rain(img, t, t0, n=24):
 
 
 def vote_cards(img, a=1.0):
+    """одна карточка: с чего начинаем ремонт"""
     lay = img.copy()
     d = ImageDraw.Draw(lay)
-    d.rounded_rectangle([60, 210, W - 60, 560], radius=22, fill=(16, 18, 26), outline=(110, 150, 210), width=4)
-    f0 = F(34, FONT_SUB)
-    d.text(((W - f0.getlength("ЧТО ГОТОВИМ?")) / 2, 230), "ЧТО ГОТОВИМ?", font=f0, fill=WHITE)
-    for i, (txt, col) in enumerate((("ШАУРМА", (230, 140, 50)), ("БУРГЕРЫ", (210, 60, 60)), ("ПЕЛЬМЕНИ", (90, 150, 220)))):
-        y = 296 + i * 84
-        d.ellipse([100, y, 160, y + 60], fill=col)
-        d.text((130 - F(34, FONT_SUB).getlength(str(i + 1)) / 2, y + 8), str(i + 1), font=F(34, FONT_SUB), fill=WHITE)
-        d.text((186, y + 8), txt, font=F(40, FONT_SUB), fill=WHITE)
-    d.rounded_rectangle([60, 590, W - 60, 750], radius=22, fill=(16, 18, 26), outline=(110, 150, 210), width=4)
-    d.text(((W - f0.getlength("РЕМОНТ: С ЧЕГО?")) / 2, 608), "РЕМОНТ: С ЧЕГО?", font=f0, fill=WHITE)
-    for i, (txt, col) in enumerate((("ПОЛ", (150, 110, 70)), ("ПЛИТА", (120, 124, 132)), ("ОКНО", (90, 150, 220)))):
-        x0 = 90 + i * 186
-        d.rounded_rectangle([x0, 664, x0 + 170, 728], radius=14, fill=col)
-        d.text((x0 + 85 - F(32, FONT_SUB).getlength(txt) / 2, 676), txt, font=F(32, FONT_SUB), fill=WHITE)
+    d.rounded_rectangle([60, 250, W - 60, 640], radius=24, fill=(16, 18, 26), outline=(110, 150, 210), width=4)
+    f0 = F(40, FONT_SUB)
+    d.text(((W - f0.getlength("РЕМОНТ: С ЧЕГО?")) / 2, 274), "РЕМОНТ: С ЧЕГО?", font=f0, fill=WHITE)
+    for i, (txt, col) in enumerate((("ПОЛ", (170, 120, 70)), ("ПЛИТА", (120, 124, 132)), ("ОКНО", (90, 150, 220)))):
+        y = 346 + i * 92
+        d.ellipse([110, y, 176, y + 66], fill=col)
+        d.text((143 - F(38, FONT_SUB).getlength(str(i + 1)) / 2, y + 9), str(i + 1), font=F(38, FONT_SUB), fill=WHITE)
+        d.text((200, y + 8), txt, font=F(46, FONT_SUB), fill=WHITE)
     return Image.blend(img, lay, a)
 
 

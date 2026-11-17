@@ -465,6 +465,8 @@ def chibi(d, who, x, y, s=1.0, t=0.0, face="neutral", look=0, walk=False, arm=No
     elif c["style"] == "bald":
         d.chord([x - R + 3 * s, hy - 4 * s, x + R - 3 * s, hy + R + 8 * s], 0, 180, fill=(126, 92, 70), outline=OUT, width=ow)
         d.arc([x - R * .6, hy - R * .9, x - R * .1, hy - R * .5], 200, 320, fill=(255, 240, 220), width=2 * s)   # блик на лысине
+    if c.get("beard"):   # борода/щетина по линии челюсти
+        d.chord([x - R + 2 * s, hy - 2 * s, x + R - 2 * s, hy + R + 4 * s], 0, 180, fill=c["beard"], outline=OUT, width=ow)
     # лицо
     ex = look * 5 * s
     blink = (t * 1.0 + x * .013) % 3.6 < .12

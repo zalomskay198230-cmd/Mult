@@ -151,14 +151,17 @@ def build_timur():
     return dict(root=root, arms=arms, neck=neck, eyes=eyes, mouth=mouth)
 
 
-def pose(T, t, arms=("down", "down"), smile=False, look=0.0):
+def pose(T, t, arms=("down", "down"), smile=False, look=0.0, talk=False):
     A = {"down": (0, 8), "up": (0, 160), "wave": (0, 135 + 22 * math.sin(t * 9)), "front": (-75, 12), "hip": (0, 35)}
     for sx, key in zip((-1, 1), arms):
         rx, ry = A[key]
         T["arms"][sx].rotation_euler = (math.radians(rx), -math.radians(ry) * sx, 0)
     T["neck"].rotation_euler = (0, math.radians(4 * math.sin(t * 1.3)), math.radians(look))
     T["root"].location.z = .01 * math.sin(t * 2.4)   # дыхание
-    T["mouth"].scale = (1.0, 1.0, 2.6 if smile else 1.0)
+    m = 2.6 if smile else 1.0
+    if talk:
+        m = 1.0 + 2.2 * abs(math.sin(t * 13)) * (.6 + .4 * abs(math.sin(t * 3.1)))
+    T["mouth"].scale = (1.0, 1.0, m)
 
 
 # ---------- фургон-кухня ----------
@@ -221,7 +224,51 @@ def setup_render(samples):
     S.world.node_tree.nodes["Background"].inputs["Strength"].default_value = .6
 
 
+def build_street(X=30.0):
+    """улица и фургон снаружи (отдельная площадка, x≈30)"""
+    cube("asph", (X, 2, -.03), (30, 30, .06), "dark", 0)
+    cube("walk", (X, -1.6, .03), (30, 2.2, .1), "grout", 0)
+    rnd = random.Random(3)
+    for k in range(9):   # дома
+        hx, hh = X - 9 + k * 2.3, rnd.uniform(4, 8)
+        cube(f"bld{k}", (hx, 7.5, hh / 2), (2.1, 2, hh), ("street", "tile", "apron")[k % 3], 0)
+        for r in range(int(hh / 1.1)):
+            for c in range(3):
+                cube(f"w{k}_{r}_{c}", (hx - .6 + c * .6, 6.48, .9 + r * 1.1), (.34, .02, .5), "glass", 0)
+    # фургон
+    vx, vy = X + .6, 1.8
+    cube("vbody", (vx, vy, 1.25), (3.0, 1.7, 2.0), "apron", .08)
+    cube("vstripe", (vx + .4, vy - .86, .7), (3.8, .02, .16), "red", 0)
+    cube("vcab", (vx + 1.95, vy, .95), (1.0, 1.65, 1.4), "apron", .1)
+    cube("vwind", (vx + 2.42, vy, 1.25), (.04, 1.4, .55), "glass", 0)
+    cube("vside", (vx + 1.95, vy - .83, 1.25), (.7, .02, .5), "glass", 0)
+    cube("hatch", (vx - .2, vy - .86, 1.5), (1.6, .02, .7), "glass", 0)
+    cube("awning", (vx - .2, vy - 1.1, 1.95), (1.8, .5, .06), "red", .02, rot=(math.radians(-15), 0, 0))
+    cube("vcounter", (vx - .2, vy - .95, 1.13), (1.7, .22, .06), "steel", .01)
+    sphere("lamp_ok", (vx + 2.46, vy - .55, .62), (.03, .13, .13), "bulb")
+    sphere("lamp_none", (vx + 2.46, vy + .55, .62), (.03, .13, .13), "dark")   # фары нет
+    for wx in (vx - .9, vx + 1.9):
+        for wy in (vy - .86, vy + .86):
+            bpy.ops.mesh.primitive_cylinder_add(radius=.36, depth=.26, location=(wx, wy, .36), rotation=(math.radians(90), 0, 0))
+            bpy.context.object.data.materials.append(M["dark"])
+            shade_smooth(bpy.context.object)
+    for k in range(5):   # ржавчина
+        sphere(f"rust{k}", (vx - 1.2 + k * .6, vy - .86, .4 + (k % 2) * .1), (.12, .01, .06), "wood")
+    light("SUN", (X, -5, 10), 3.0, (1, .96, .9), rot=(math.radians(50), 0, math.radians(-30)))
+
+
+def build_box():
+    root = empty("box", (0, 0, 0))
+    cube("box_b", (0, 0, .17), (.6, .4, .34), "steel", .03, root)
+    cube("box_lid", (0, 0, .36), (.64, .44, .06), "dark", .02, root)
+    cube("box_lock", (0, -.21, .24), (.1, .03, .12), "wood", .01, root)
+    return root
+
+
 build_truck()
+build_street()
+BOX = build_box()
+BOX.location = (.55, .38, 0)
 T = build_timur()
 light("AREA", (0, -2.6, 2.4), 420, (1, .95, .88), 3.0, (math.radians(60), 0, 0))       # мягкий фронтальный
 light("POINT", (0, .2, 2.1), 120, (1, .82, .55))                                        # лампа
@@ -237,6 +284,106 @@ def cam(loc, look_at, lens=35):
     CAM.data.lens = lens
 
 
+def show(o, on):
+    o.hide_render = not on
+    for c in o.children_recursive:
+        c.hide_render = not on
+
+
+def talking(sc, t):
+    return any(a <= t <= b for a, b in sc["talk"])
+
+
+def sky(outdoor):
+    bgn = S.world.node_tree.nodes["Background"]
+    bgn.inputs["Color"].default_value = (.42, .62, .9, 1) if outdoor else (.25, .28, .34, 1)
+    bgn.inputs["Strength"].default_value = 1.2 if outdoor else .6
+
+
+def sc_s01(t, L, sc):   # улица: Тимур идёт к фургону
+    sky(True)
+    k = min(1, t / (L * .7))
+    T["root"].location = (27.6 + 1.4 * k, -.9, 0)
+    T["root"].rotation_euler = (0, 0, math.radians(30 if k < 1 else 0))
+    pose(T, t, ("wave", "down") if k >= 1 else ("down", "down"), smile=k >= 1, talk=talking(sc, t))
+    T["root"].location.z += .05 * abs(math.sin(t * 9)) if k < 1 else 0
+    cam((29.3, -6.2, 1.9), (30.0, .6, 1.1), 30)
+
+
+def sc_s02(t, L, sc):   # фургон крупнее, «вах»
+    sky(True)
+    p = t / L
+    T["root"].location = (32.2, -.95, 0)
+    T["root"].rotation_euler = (0, 0, math.radians(-25))
+    pose(T, t, ("up", "up") if p > .72 else ("down", "hip"), smile=p > .72, talk=talking(sc, t))
+    cam((34.6, -4.2, 1.6), (31.8, .9, 1.1), 30)
+
+
+def sc_s03(t, L, sc):   # внутри: «решаете вы» — показывает на зрителя
+    T["root"].location = (0, -.3, 0); T["root"].rotation_euler = (0, 0, 0)
+    pose(T, t, ("down", "front"), smile=True, talk=talking(sc, t))
+    cam((0, -2.3, 1.62), (0, .2, 1.5), 34)
+
+
+def sc_s04(t, L, sc):   # «лайк = 10 ₽» — машет
+    T["root"].location = (0, -.1, 0); T["root"].rotation_euler = (0, 0, 0)
+    pose(T, t, ("wave", "up") if t > L * .5 else ("down", "wave"), smile=True, talk=talking(sc, t))
+    cam((0, -3.0, 1.45), (0, .3, 1.3), 32)
+
+
+def sc_s05(t, L, sc):   # лезет под прилавок, находит ящик
+    p = t / L
+    crouch = min(1, p / .3)
+    T["root"].location = (-.2, .0, -.55 * crouch); T["root"].rotation_euler = (0, 0, math.radians(-20 * crouch))
+    pose(T, t, ("front", "front") if p > .3 else ("down", "down"), smile=False, talk=talking(sc, t))
+    show(BOX, p > .3)
+    cam((-.9, -3.0, 1.15), (.15, .3, .7), 30)
+
+
+def sc_s06(t, L, sc):   # крупно ящик
+    show(BOX, True)
+    T["root"].location = (-1.6, -.4, -3)   # героя убираем из кадра
+    cam((.55, -.55, 1.15 - .1 * min(1, t / L)), (.55, .38, .25), 34)
+
+
+def sc_s07(t, L, sc):
+    show(BOX, True)
+    T["root"].location = (0, -.1, 0); T["root"].rotation_euler = (0, 0, 0)
+    pose(T, t, ("down", "hip"), smile=False, talk=talking(sc, t), look=10 * math.sin(t))
+    cam((0, -3.3, 1.4), (0, .3, 1.25), 30)
+
+
+def sc_s08(t, L, sc):
+    show(BOX, True)
+    T["root"].location = (0, -.1, 0); T["root"].rotation_euler = (0, 0, 0)
+    pose(T, t, ("wave", "wave"), smile=True, talk=talking(sc, t))
+    cam((0, -3.3, 1.4), (0, .3, 1.25), 30)
+
+
+if MODE == "scenes":
+    import json
+    TL = json.load(open(argv[1]))
+    outdir = argv[2]
+    setup_render(int(argv[3]) if len(argv) > 3 else 24)
+    S.render.resolution_percentage = int(float(argv[4]) * 100) if len(argv) > 4 else 75
+    os.makedirs(outdir, exist_ok=True)
+    only = set(argv[5].split(",")) if len(argv) > 5 else None
+    for sc in TL["scenes"]:
+        name, L = sc["name"], sc["length"]
+        if only and name not in only:
+            continue
+        fn = globals()["sc_" + name]
+        for f in range(int(math.ceil(L * FPS3D))):
+            out = os.path.join(outdir, f"{name}_{f:04d}.png")
+            if os.path.exists(out):
+                continue
+            show(BOX, False)
+            sky(False)
+            fn(f / FPS3D, L, sc)
+            S.render.filepath = out
+            bpy.ops.render.render(write_still=True)
+        print("SCENE DONE", name)
+
 if MODE == "test":
     out = argv[1]
     setup_render(int(argv[2]) if len(argv) > 2 else 24)
@@ -245,3 +392,17 @@ if MODE == "test":
     cam((0, -3.4, 1.35), (0, .3, 1.2), 32)
     S.render.filepath = out
     bpy.ops.render.render(write_still=True)
+
+if MODE == "peek":   # по одному кадру из каждой сцены (60% длины) — проверить ракурсы
+    import json
+    TL = json.load(open(argv[1]))
+    outdir = argv[2]
+    setup_render(16)
+    S.render.resolution_percentage = 50
+    os.makedirs(outdir, exist_ok=True)
+    for sc in TL["scenes"]:
+        show(BOX, False)
+        sky(False)
+        globals()["sc_" + sc["name"]](sc["length"] * .6, sc["length"], sc)
+        S.render.filepath = os.path.join(outdir, sc["name"] + ".png")
+        bpy.ops.render.render(write_still=True)

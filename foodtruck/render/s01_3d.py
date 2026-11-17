@@ -68,8 +68,8 @@ def frame3d(name, t):
 
 
 NICKS = ["ashot_77", "lena.k", "vova_grill", "nastya", "dimon", "kot_v_sapogah", "marat05", "olya_m"]
-MSGS = ["вах фургон", "лайк брат", "шаурму давай", "открывай ящик!!", "пельмени топ", "где фара?", "бургеры!!!",
-        "рецепт 7 жуть", "держи лайк", "не открывай", "красавец фургон", "тимур красава"]
+MSGS = ["вах фургон", "лайк брат", "шаурму давай", "матрас на выброс", "пельмени топ", "где фара?", "бургеры!!!",
+        "начни с пола", "держи лайк", "плиту чини!!", "красавец фургон", "тимур красава"]
 
 
 def stream_ui(img, t, cash=0):
@@ -220,109 +220,6 @@ def s06(t, L, cue):
             for i, (qx, qy) in enumerate(((90, 520), (600, 480))):
                 if int(t * 3 + i) % 3:
                     d.text((qx, qy), "?", font=F(90, FONT_SUB), fill=YEL, stroke_width=5, stroke_fill=(14, 12, 16))
-    stream_ui(img, t)
-    return img
-
-
-def vote_cards(img, a=1.0):
-    lay = img.copy()
-    d = ImageDraw.Draw(lay)
-    d.rounded_rectangle([60, 210, W - 60, 560], radius=22, fill=(16, 18, 26), outline=(110, 150, 210), width=4)
-    f0 = F(34, FONT_SUB)
-    d.text(((W - f0.getlength("ЧТО ГОТОВИМ?")) / 2, 230), "ЧТО ГОТОВИМ?", font=f0, fill=WHITE)
-    for i, (txt, col) in enumerate((("ШАУРМА", (230, 140, 50)), ("БУРГЕРЫ", (210, 60, 60)), ("ПЕЛЬМЕНИ", (90, 150, 220)))):
-        y = 296 + i * 84
-        d.ellipse([100, y, 160, y + 60], fill=col)
-        d.text((130 - F(34, FONT_SUB).getlength(str(i + 1)) / 2, y + 8), str(i + 1), font=F(34, FONT_SUB), fill=WHITE)
-        d.text((186, y + 8), txt, font=F(40, FONT_SUB), fill=WHITE)
-    d.rounded_rectangle([60, 590, W - 60, 750], radius=22, fill=(16, 18, 26), outline=(110, 150, 210), width=4)
-    d.text(((W - f0.getlength("РЕМОНТ: С ЧЕГО?")) / 2, 608), "РЕМОНТ: С ЧЕГО?", font=f0, fill=WHITE)
-    for i, (txt, col) in enumerate((("ПОЛ", (150, 110, 70)), ("ПЛИТА", (120, 124, 132)), ("ОКНО", (90, 150, 220)))):
-        x0 = 90 + i * 186
-        d.rounded_rectangle([x0, 664, x0 + 170, 728], radius=14, fill=col)
-        d.text((x0 + 85 - F(32, FONT_SUB).getlength(txt) / 2, 676), txt, font=F(32, FONT_SUB), fill=WHITE)
-    return Image.blend(img, lay, a)
-
-
-# ---------- сцены ----------
-def s01(t, L, cue):
-    p = (t - cue["01"]) / dur("01.mp3")
-    img = frame3d("s01", t)
-    pill(img, "ПН: УВОЛЕН" if p < .45 else "ВТ: КУПИЛ ФУРГОН", W / 2, 200, (150, 30, 36) if p < .45 else (30, 110, 60), WHITE, 34)
-    stamp(img, "УВОЛЕН!", t, .4, RED, 300) if p < .45 else None
-    stream_ui(img, t)
-    return img
-
-
-def s02(t, L, cue):
-    p = (t - cue["02"]) / dur("02.mp3")
-    img = frame3d("s02", t)
-    pill(img, "−40 000 ₽", W / 2, 200, (150, 30, 36), WHITE, 40)
-    if p > .45:
-        pill(img, "1998 · без фары", W / 2, 280, (20, 22, 30), YEL, 28)
-    if p > .75:
-        stamp(img, "ВАХ!", t, cue["02"] + dur("02.mp3") * .75, YEL, 360)
-    stream_ui(img, t)
-    return img
-
-
-def s03(t, L, cue):
-    img = frame3d("s03", t)
-    pill(img, "РЕШАЕТЕ ВЫ", W / 2, 210, (20, 22, 30), YEL, 46)
-    stream_ui(img, t)
-    return img
-
-
-def s04(t, L, cue):
-    p = (t - cue["04"]) / dur("04.mp3")
-    img = frame3d("s04", t)
-    d = ImageDraw.Draw(img)
-    cx, cy = W / 2, 300
-    r = 64 * (1 + .08 * abs(math.sin(t * 6)))
-    d.ellipse([cx - r, cy - r * .7, cx, cy + r * .3], fill=(240, 50, 70))
-    d.ellipse([cx, cy - r * .7, cx + r, cy + r * .3], fill=(240, 50, 70))
-    d.polygon([(cx - r * .97, cy - r * .05), (cx + r * .97, cy - r * .05), (cx, cy + r * .95)], fill=(240, 50, 70))
-    f = F(50, FONT_SUB)
-    d.text((cx - f.getlength("1 ЛАЙК = 10 ₽") / 2, 400), "1 ЛАЙК = 10 ₽", font=f, fill=WHITE, stroke_width=5, stroke_fill=(14, 12, 16))
-    for i in range(6):
-        k = ((t * .9) + i / 6) % 1
-        x = cx + (W - 180 - cx) * k + 30 * math.sin(i * 2 + t * 3)
-        y = cy - (cy - 90) * k
-        d.text((x, y), "+10 ₽", font=F(26, FONT_SUB), fill=GREEN, stroke_width=3, stroke_fill=(14, 12, 16))
-    if p > .45:
-        pill(img, "ЛАЙКНУЛ — ПОМОГ", W / 2, 500, (214, 30, 40), WHITE, 32)
-    stream_ui(img, t)
-    return img
-
-
-def s05(t, L, cue):
-    p = (t - cue["05"]) / dur("05.mp3")
-    img = frame3d("s05", t)
-    if p > .35:
-        stamp(img, "ЯЩИК?!", t, cue["05"] + dur("05.mp3") * .35, YEL, 260, 6)
-    if p > .65:
-        pill(img, "железный · с замком", W / 2, 420, (20, 22, 30), WHITE, 28)
-    stream_ui(img, t)
-    return shake(img, t, 5 if .35 < p < .42 else 0)
-
-
-def s06(t, L, cue):
-    p = (t - cue["06"]) / dur("06.mp3")
-    img = frame3d("s06", t)
-    lay = Image.new("RGBA", (460, 170), (0, 0, 0, 0))   # наклейка на крышке
-    ld = ImageDraw.Draw(lay)
-    ld.rectangle([0, 0, 459, 169], fill=(250, 240, 200, 255), outline=(130, 110, 70, 255), width=4)
-    ld.text((24, 16), "РЕЦЕПТ №7", font=F(52, FONT_SUB), fill=(40, 30, 20))
-    if p > .4:
-        ld.text((24, 92), "НЕ ГОТОВИТЬ ПОСЛЕ", font=F(28, FONT_SUB), fill=(170, 30, 30))
-        ld.text((24, 126), "ПОЛУНОЧИ", font=F(28, FONT_SUB), fill=(170, 30, 30))
-    lay = lay.rotate(-4, expand=True)
-    img.paste(lay, (int(W / 2 - lay.width / 2), 430), lay)
-    if p > .75:
-        d = ImageDraw.Draw(img)
-        for i, (qx, qy) in enumerate(((90, 330), (590, 300), (600, 700))):
-            if int(t * 3 + i) % 3:
-                d.text((qx, qy), "?", font=F(90, FONT_SUB), fill=YEL, stroke_width=5, stroke_fill=(14, 12, 16))
     stream_ui(img, t)
     return img
 

@@ -72,6 +72,9 @@ MSGS = ["вах фургон", "лайк брат", "шаурму давай", "
         "начни с пола", "держи лайк", "плиту чини!!", "красавец фургон", "тимур красава"]
 
 
+PAIRED = False   # True — ник и сообщение идут парами (реальные комментарии)
+
+
 def stream_ui(img, t, cash=0):
     d = ImageDraw.Draw(img)
     on = int(t * 2) % 2 == 0
@@ -90,7 +93,8 @@ def stream_ui(img, t, cash=0):
     base = int(t * 1.4)   # лента комментариев
     for i in range(3):
         j = base + i
-        nick, msg = NICKS[j % len(NICKS)], MSGS[(j * 5) % len(MSGS)]
+        nick = NICKS[j % len(NICKS)]
+        msg = MSGS[j % len(MSGS)] if PAIRED else MSGS[(j * 5) % len(MSGS)]
         y = 1150 + i * 34
         fn, fm = F(19, FONT_SUB), F(19)
         w = fn.getlength(nick + ": ") + fm.getlength(msg) + 24

@@ -45,8 +45,12 @@ if os.environ.get("TIMELINE"):
     print("timeline", f"{toonlib.TOTAL:.1f} c")
     sys.exit()
 
-A.MSGS[:] = ["окно топ", "вах ключ", "держи лайк", "тысяча за лайк!!", "это от ящика?", "ключ от сейфа", "лайк брат",
-             "от гаража", "рецепт 7?", "тимур красава", "стекло класс", "ставлю лайк"]
+A.PAIRED = True
+_pairs = [("courage3131", "Окно"), ("2b2b2b2b2b2b2b2b11", "3"), ("_volkov1", "1."), ("lena.k", "вах ключ"),
+          ("vova_grill", "тысяча за лайк!!"), ("nastya", "это от ящика?"), ("dimon", "держи лайк"), ("marat05", "ключ от сейфа"),
+          ("olya_m", "рецепт 7?"), ("ashot_77", "тимур красава")]
+A.NICKS[:] = [n for n, m in _pairs]
+A.MSGS[:] = [m for n, m in _pairs]
 CASH = {"k1": 0}
 
 
@@ -78,12 +82,12 @@ def vote_bars(img, t, a=1.0):
     d.rounded_rectangle([50, 150, W - 50, 420], radius=18, fill=(16, 18, 26), outline=(110, 150, 210), width=3)
     d.text((80, 168), "ИТОГИ ГОЛОСОВАНИЯ", font=F(28, FONT_SUB), fill=WHITE)
     k = min(1, t / .8)
-    for i, (lab, v, col) in enumerate((("ОКНО", .54, GREEN), ("ПОЛ", .31, (170, 120, 70)), ("ПЛИТА", .15, (120, 124, 132)))):
+    for i, (lab, v, col) in enumerate((("ОКНО", 2 / 3, GREEN), ("ПОЛ", 1 / 3, (170, 120, 70)), ("ПЛИТА", 0.0, (120, 124, 132)))):
         y = 222 + i * 64
         d.text((80, y), lab, font=F(26, FONT_SUB), fill=WHITE)
         d.rounded_rectangle([220, y + 4, W - 140, y + 32], radius=10, fill=(40, 44, 56))
         d.rounded_rectangle([220, y + 4, 220 + (W - 360) * v * k, y + 32], radius=10, fill=col)
-        d.text((W - 124, y), f"{int(v * 100 * k)}%", font=F(26, FONT_SUB), fill=col)
+        d.text((W - 124, y), f"{round(v * 100 * k)}%", font=F(26, FONT_SUB), fill=col if v else (150, 150, 156))
     return Image.blend(img, lay, a)
 
 

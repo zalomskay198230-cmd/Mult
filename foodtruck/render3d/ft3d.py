@@ -396,6 +396,100 @@ def sc_s08(t, L, sc):
     cam((0, -3.6, 1.4), (0, .3, 1.25), 30)
 
 
+
+# ---------- серия 2: окно и ключ ----------
+M["dirty"] = mat("dirty", srgb(120, 110, 90), .9, emit=srgb(90, 84, 70), strength=.4)
+M["rust"] = mat("rust", srgb(150, 96, 60), .6, metal=.6)
+
+
+def build_winframe():
+    """старая рама поверх окна выдачи (снимается), мутное стекло"""
+    root = empty("winframe", (.55, 1.1, 1.55))
+    for (x, z, w_, h_) in ((0, .43, 1.42, .1), (0, -.43, 1.42, .1), (-.68, 0, .1, .92), (.68, 0, .1, .92), (0, 0, .06, .82)):
+        cube(f"wf_{x}_{z}", (x, 0, z), (w_, .08, h_), "wood", .01, root)
+    glass = cube("wf_glass", (0, .03, 0), (1.3, .02, .8), "dirty", 0, root)
+    cube("wf_rubber", (0, -.05, -.37), (1.25, .03, .04), "dark", 0, root)
+    return root, glass
+
+
+def build_key():
+    root = empty("key", (0, 0, 0))
+    bpy.ops.mesh.primitive_torus_add(major_radius=.035, minor_radius=.01, location=(0, 0, 0), rotation=(math.radians(90), 0, 0))
+    o = bpy.context.object; o.data.materials.append(M["rust"]); shade_smooth(o); o.parent = root
+    cube("key_shaft", (0, 0, -.08), (.016, .012, .1), "rust", .002, root)
+    cube("key_tooth", (.016, 0, -.12), (.02, .012, .02), "rust", .002, root)
+    cube("key_tag", (.05, 0, .03), (.05, .006, .07), "apron", .004, root)
+    return root
+
+
+WF, WF_GLASS = build_winframe()
+KEY = build_key()
+WIN_NEW = [o for o in bpy.data.objects if o.name == "win"][0]
+
+
+def key_in_hand(on, sx=1, scale=3.2, loc=None):
+    """ключ крупно у руки (без привязки — ставим по мировым координатам кисти)"""
+    show(KEY, on)
+    if on:
+        bpy.context.view_layer.update()
+        KEY.parent = None
+        hp = bpy.data.objects[f"hand{sx}"].matrix_world.translation
+        KEY.location = loc or (hp.x, hp.y - .15, hp.z + .12)
+        KEY.scale = (scale, scale, scale)
+        KEY.rotation_euler = (0, math.radians(15), 0)
+
+
+def sc_k1(t, L, sc):   # холодный старт: крупно — ключ в руке, шок
+    show(JUNK, False)
+    T["root"].location = (0, -.4, 0); T["root"].rotation_euler = (0, 0, 0)
+    pose(T, t, ("down", "front"), smile=False, talk=talking(sc, t))
+    T["mouth"].scale = (1.2, 1, 3.2)
+    key_in_hand(True, 1, 3.4, (.2, -.75, 1.62))
+    cam((.1, -2.0, 1.75), (.05, .2, 1.55), 40)
+
+
+def sc_k2(t, L, sc):   # итоги голосования и касса
+    show(JUNK, False); key_in_hand(False)
+    T["root"].location = (0, -.2, 0); T["root"].rotation_euler = (0, 0, 0)
+    pose(T, t, ("wave", "up") if t > L * .4 else ("down", "wave"), smile=True, talk=talking(sc, t))
+    cam((0, -3.2, 1.45), (0, .3, 1.3), 30)
+
+
+def sc_k3(t, L, sc):   # снимает гнилую раму — трещит
+    show(JUNK, False); key_in_hand(False); show(WF, True)
+    p = t / L
+    T["root"].location = (.4, .35, 0); T["root"].rotation_euler = (0, 0, math.radians(160))
+    pose(T, t, ("up", "up"), smile=False, talk=talking(sc, t))
+    WF.location = (.55, 1.1 - .5 * max(0, p - .5), 1.55 - .3 * max(0, p - .6))
+    WF.rotation_euler = (math.radians(-35 * max(0, p - .5)), 0, math.radians(6 * math.sin(t * 30)) if p > .3 else 0)
+    cam((-.8, -2.4, 1.6), (.5, .9, 1.4), 30)
+
+
+def sc_k4(t, L, sc):   # новое стекло
+    show(JUNK, False); key_in_hand(False); show(WF, False)
+    T["root"].location = (-.4, .1, 0); T["root"].rotation_euler = (0, 0, math.radians(15))
+    pose(T, t, ("up", "hip"), smile=True, talk=talking(sc, t))
+    cam((0, -3.0, 1.5), (.2, .6, 1.35), 30)
+
+
+def sc_k5(t, L, sc):   # в старой раме под резинкой — ключ (крупно)
+    show(JUNK, False); show(WF, True)
+    T["root"].location = (-3, -1, -4)
+    WF.location = (.55, .3, .6); WF.rotation_euler = (math.radians(-80), 0, 0)
+    show(KEY, True); KEY.parent = None; KEY.scale = (2.4, 2.4, 2.4)
+    KEY.location = (.6, .05, .67); KEY.rotation_euler = (math.radians(-80), 0, math.radians(20))
+    z = 1 + .2 * min(1, t / L)
+    cam((.55, -.5, 1.35), (.6, .1, .65), 34 * z)
+
+
+def sc_k6(t, L, sc):   # держит ключ: «от чего он?»
+    show(JUNK, False); show(WF, False)
+    T["root"].location = (0, -.3, 0); T["root"].rotation_euler = (0, 0, 0)
+    pose(T, t, ("down", "up"), smile=False, talk=talking(sc, t), look=8 * math.sin(t * 1.5))
+    key_in_hand(True, 1, 4.0)
+    cam((0, -2.8, 1.55), (0, .2, 1.45), 32)
+
+
 if MODE == "scenes":
     import json
     TL = json.load(open(argv[1]))
@@ -414,6 +508,8 @@ if MODE == "scenes":
             if os.path.exists(out):
                 continue
             show(BOX, False); show(JUNK, False)
+            for _n in ("WF", "KEY"):
+                if _n in globals(): show(globals()[_n], False)
             sky(False)
             fn(f / FPS3D, L, sc)
             S.render.filepath = out
@@ -438,6 +534,8 @@ if MODE == "peek":   # по одному кадру из каждой сцены
     os.makedirs(outdir, exist_ok=True)
     for sc in TL["scenes"]:
         show(BOX, False); show(JUNK, False)
+        for _n in ("WF", "KEY"):
+            if _n in globals(): show(globals()[_n], False)
         sky(False)
         globals()["sc_" + sc["name"]](sc["length"] * .6, sc["length"], sc)
         S.render.filepath = os.path.join(outdir, sc["name"] + ".png")

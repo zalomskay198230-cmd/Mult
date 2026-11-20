@@ -165,8 +165,9 @@ def f06(t, L, cue):   # соединяем ямы, тёща таскает ме�
     p = (t - cue["06"]) / dur("06.mp3")
     v = V(world(day=True, lights=False, dug=1.0, cont=True, nb="open"), (1220, GR + 180, 1.15))
     d = v.d
-    k = min(1, p / .4)
-    d.rectangle([PIT_X1, GR + 270, PIT_X1 + (1380 - PIT_X1) * k, GR + 340], fill=(54, 42, 38), outline=(96, 76, 64), width=4)   # тоннель
+    k = max(0.0, min(1, p / .4))
+    if k > .01:
+        d.rectangle([PIT_X1, GR + 270, PIT_X1 + (1380 - PIT_X1) * k, GR + 340], fill=(54, 42, 38), outline=(96, 76, 64), width=4)   # тоннель
     for i, n in enumerate(NEIGHBORS[:4]):
         chibi(v.d, n, 860 + i * 140 + 20 * math.sin(t * 2 + i), GR - 4, .9, t, "smile", 1, walk=True)
     chibi(v.d, "neigh", 1470, GR + 476, 1.0, t, "smile", -1, arm="up")

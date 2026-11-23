@@ -406,6 +406,13 @@ def choice_card(img, x0, title, kind, a=1.0):
         md.rectangle([mini.width * .4, mini.height * .2, mini.width * .6, mini.height * .4], fill=(40, 200, 90))
         md.text((mini.width * .41, mini.height * .23), "ВЫХОД", font=F(18, FONT_SUB), fill=WHITE)
         md.polygon([(mini.width * .5, mini.height * .5), (mini.width * .42, mini.height * .7), (mini.width * .58, mini.height * .7)], fill=YEL)
+    elif kind == "home":    # окно квартиры, тёмный город, свеча
+        md.rectangle([mini.width * .15, mini.height * .12, mini.width * .85, mini.height * .7], fill=(10, 12, 22), outline=(120, 100, 80), width=6)
+        md.line([(mini.width * .5, mini.height * .12), (mini.width * .5, mini.height * .7)], fill=(120, 100, 80), width=5)
+        for i in range(5):
+            md.rectangle([mini.width * (.2 + i * .12), mini.height * (.45 - (i % 3) * .08), mini.width * (.28 + i * .12), mini.height * .7], fill=(30, 34, 46))
+        md.rectangle([mini.width * .45, mini.height * .78, mini.width * .55, mini.height * .95], fill=(236, 230, 210))
+        md.ellipse([mini.width * .47, mini.height * .7, mini.width * .53, mini.height * .79], fill=(255, 200, 80))
     elif kind == "sheet":   # каталка под простынёй
         md.rectangle([mini.width * .1, mini.height * .55, mini.width * .9, mini.height * .62], fill=(150, 156, 162))
         md.polygon([(mini.width * .08, mini.height * .55), (mini.width * .2, mini.height * .35), (mini.width * .8, mini.height * .32), (mini.width * .92, mini.height * .55)], fill=(226, 230, 230))

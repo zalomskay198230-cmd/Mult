@@ -182,7 +182,7 @@ def e03(t, L, cue):   # подъезд: лифт стоит, кран сухой
     f = F(44, FONT_SUB)
     d.text((360 - f.getlength("— —") / 2, 146), "— —", font=f, fill=(90, 40, 40))
     img = M.done(img)
-    if p > .5:   # кран — тишина
+    if p > .68:   # кран — тишина
         dd = ImageDraw.Draw(img)
         dd.rectangle([0, 0, W, H], fill=(30, 34, 38))
         dd.rectangle([200, 640, 520, 700], fill=(200, 204, 210))

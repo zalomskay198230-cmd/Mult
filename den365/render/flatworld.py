@@ -445,28 +445,43 @@ def chibi(d, who, x, y, s=1.0, t=0.0, face="neutral", look=0, walk=False, arm=No
     hy = by - 50 * s - 27 * s
     R = 29 * s
     hair = c["hair"]
-    if c["style"] == "long":
-        d.rounded_rectangle([x - R - 5 * s, hy - R, x + R + 5 * s, hy + R + 22 * s], radius=16 * s, fill=hair, outline=OUT, width=ow)
-    d.ellipse([x - R, hy - R, x + R, hy + R], fill=c["skin"], outline=OUT, width=ow)
-    d.ellipse([x + R * .2, hy - R * .7, x + R * .95, hy + R * .8], fill=dk(c["skin"], .93))   # тень на щеке
+
+    def arcpts(cx, cy, rx, ry, a0, a1, n=28):
+        return [(cx + rx * math.cos(math.radians(a0 + (a1 - a0) * i / n)), cy + ry * math.sin(math.radians(a0 + (a1 - a0) * i / n))) for i in range(n + 1)]
+
+    if c["style"] == "long":   # волосы за головой — ровная «капля» до плеч
+        d.polygon(arcpts(x, hy - 2 * s, R + 6 * s, R + 4 * s, 180, 360) + [(x + R + 6 * s, hy + R + 18 * s), (x - R - 6 * s, hy + R + 18 * s)],
+                  fill=hair, outline=OUT, width=ow)
     for sx in (-1, 1):   # уши
         d.ellipse([x + sx * R - 5 * s, hy - 3 * s, x + sx * R + 5 * s, hy + 9 * s], fill=c["skin"], outline=OUT, width=ow * .7)
-    if c["style"] in ("short", "long"):
-        d.chord([x - R - 1 * s, hy - R - 3 * s, x + R + 1 * s, hy + R * .5], 180, 360, fill=hair, outline=OUT, width=ow)
-        d.polygon([(x - R * .9, hy - 11 * s), (x - R * .3, hy - 18 * s), (x - R * .1, hy - 10 * s), (x + R * .4, hy - 18 * s), (x + R * .9, hy - 11 * s), (x + R, hy - R * .3), (x - R, hy - R * .3)], fill=hair)
-    elif c["style"] == "spiky":
-        d.chord([x - R, hy - R - 2 * s, x + R, hy + R * .3], 180, 360, fill=hair, outline=OUT, width=ow)
-        for k_ in range(5):
-            bx = x - R * .8 + k_ * R * .4
-            d.polygon([(bx - 7 * s, hy - R * .6), (bx, hy - R - 10 * s), (bx + 7 * s, hy - R * .6)], fill=hair)
+    d.ellipse([x - R, hy - R, x + R, hy + R], fill=c["skin"], outline=OUT, width=ow)
+    beard = c.get("beard") or ((126, 92, 70) if c["style"] == "bald" else None)
+    if beard:   # аккуратная борода по линии челюсти, рот открыт
+        outer = arcpts(x, hy, R, R, 0, 180)
+        inner = arcpts(x, hy + 13 * s, R * .42, 7 * s, 180, 0, 16)
+        jaw = [(x + R, hy + 2 * s)] + outer + [(x - R, hy + 2 * s), (x - R * .78, hy + 4 * s)] + inner + [(x + R * .78, hy + 4 * s)]
+        d.polygon(jaw, fill=beard)
+        d.line(outer, fill=OUT, width=ow)
+        d.rounded_rectangle([x - 11 * s, hy + 8 * s, x + 11 * s, hy + 13 * s], radius=2.5 * s, fill=beard)   # усы
+    if c["style"] in ("short", "long"):   # шапка волос с ровной чёлкой
+        cap = arcpts(x, hy, R + 1.5 * s, R + 2.5 * s, 180, 360)
+        fringe = [(x + R + 1.5 * s, hy - 6 * s), (x + R * .55, hy - 12 * s), (x, hy - 9 * s), (x - R * .55, hy - 12 * s), (x - R - 1.5 * s, hy - 6 * s)]
+        d.polygon(cap + fringe, fill=hair, outline=OUT, width=ow)
+    elif c["style"] == "spiky":   # ровные одинаковые пряди
+        cap = arcpts(x, hy, R + 1.5 * s, R + 2.5 * s, 180, 360)
+        d.polygon(cap + [(x + R + 1.5 * s, hy - 8 * s), (x - R - 1.5 * s, hy - 8 * s)], fill=hair, outline=OUT, width=ow)
+        for k_ in range(4):
+            a = math.radians(228 + k_ * 28)
+            bx, by_ = x + (R + 1 * s) * math.cos(a), hy + (R + 1 * s) * math.sin(a)
+            tx, ty = x + (R + 9 * s) * math.cos(a), hy + (R + 9 * s) * math.sin(a)
+            n_ = (-math.sin(a) * 5 * s, math.cos(a) * 5 * s)
+            d.polygon([(bx - n_[0], by_ - n_[1]), (tx, ty), (bx + n_[0], by_ + n_[1])], fill=hair, outline=OUT, width=ow * .6)
     elif c["style"] == "bun":
-        d.chord([x - R, hy - R - 1 * s, x + R, hy + R * .3], 180, 360, fill=hair, outline=OUT, width=ow)
-        d.ellipse([x - 12 * s, hy - R - 20 * s, x + 12 * s, hy - R + 4 * s], fill=hair, outline=OUT, width=ow)
+        d.ellipse([x - 11 * s, hy - R - 17 * s, x + 11 * s, hy - R + 4 * s], fill=hair, outline=OUT, width=ow)
+        cap = arcpts(x, hy, R + 1.5 * s, R + 2 * s, 180, 360)
+        d.polygon(cap + [(x + R + 1.5 * s, hy - 7 * s), (x, hy - 13 * s), (x - R - 1.5 * s, hy - 7 * s)], fill=hair, outline=OUT, width=ow)
     elif c["style"] == "bald":
-        d.chord([x - R + 3 * s, hy - 4 * s, x + R - 3 * s, hy + R + 8 * s], 0, 180, fill=(126, 92, 70), outline=OUT, width=ow)
-        d.arc([x - R * .6, hy - R * .9, x - R * .1, hy - R * .5], 200, 320, fill=(255, 240, 220), width=2 * s)   # блик на лысине
-    if c.get("beard"):   # борода/щетина по линии челюсти
-        d.chord([x - R + 2 * s, hy - 2 * s, x + R - 2 * s, hy + R + 4 * s], 0, 180, fill=c["beard"], outline=OUT, width=ow)
+        d.arc([x - R * .62, hy - R * .88, x - R * .12, hy - R * .5], 200, 320, fill=(255, 240, 220), width=2 * s)   # блик на лысине
     # лицо
     ex = look * 5 * s
     blink = (t * 1.0 + x * .013) % 3.6 < .12
@@ -475,19 +490,20 @@ def chibi(d, who, x, y, s=1.0, t=0.0, face="neutral", look=0, walk=False, arm=No
         if blink:
             d.line([cx_ - 4 * s, hy + 1 * s, cx_ + 4 * s, hy + 1 * s], fill=OUT, width=2 * s)
         else:
-            big = 1.35 if face == "shock" else 1.0
+            big = 1.35 if face == "shock" else (.85 if c.get("glasses") else 1.0)
             d.ellipse([cx_ - 5.5 * s * big, hy - 6 * s * big, cx_ + 5.5 * s * big, hy + 6 * s * big], fill=(255, 255, 255), outline=OUT, width=1.4 * s)
             d.ellipse([cx_ - 3.2 * s + ex * .3, hy - 3 * s, cx_ + 3.2 * s + ex * .3, hy + 3.4 * s], fill=(30, 26, 30))
             d.ellipse([cx_ - 1.6 * s + ex * .3, hy - 2.4 * s, cx_ + .2 * s + ex * .3, hy - .6 * s], fill=(255, 255, 255))
     if c.get("glasses"):
         for sx in (-1, 1):
             cx_ = x + sx * 10 * s + ex
-            d.ellipse([cx_ - 8.5 * s, hy - 8.5 * s, cx_ + 8.5 * s, hy + 8.5 * s], outline=OUT, width=1.8 * s)
+            d.rounded_rectangle([cx_ - 9 * s, hy - 7.5 * s, cx_ + 9 * s, hy + 7.5 * s], radius=4 * s, outline=OUT, width=1.6 * s)
+        d.line([x - 1 * s + ex, hy - 1 * s, x + 1 * s + ex, hy - 1 * s], fill=OUT, width=1.6 * s)   # перемычка
     if face == "angry" or face == "shock":
         for sx in (-1, 1):
             cx_ = x + sx * 10 * s + ex
             d.line([cx_ - 6 * s, hy - 12 * s - (2 * s if face == "shock" else 0), cx_ + 6 * s, hy - 12 * s - (sx * 3 * s if face == "angry" else 2 * s)], fill=OUT, width=2.2 * s)
-    for sx in (-1, 1):   # румянец
+    for sx in (-1, 1) if not (c.get("beard") or c["style"] == "bald") else ():   # румянец (не поверх бороды)
         d.ellipse([x + sx * 17 * s + ex - 5 * s, hy + 7 * s, x + sx * 17 * s + ex + 5 * s, hy + 12 * s], fill=mix(c["skin"], (240, 120, 120), .35))
     my = hy + 15 * s
     if face == "shock":

@@ -251,19 +251,89 @@ def e08(t, L, cue):   # свет на крыше
     return img
 
 
+_cards = {}
+
+
+def card_art(kind):
+    """мини-кадры для карточек выбора (кешируются)"""
+    if kind in _cards:
+        return _cards[kind]
+    if kind == "home":   # тёмная квартира: окно в чёрный город, свеча на подоконнике, запасы
+        img = city(lit=0, night=1.0)
+        img = window_frame(img)
+        d = ImageDraw.Draw(img)
+        d.rectangle([0, 900, W, H], fill=(28, 22, 20))
+        d.rectangle([40, 880, W - 40, 910], fill=(70, 54, 44))   # подоконник
+        for i, (x, col) in enumerate(((120, (200, 60, 50)), (220, (60, 110, 180)), (500, (230, 190, 80)))):
+            d.rounded_rectangle([x, 760, x + 80, 880], radius=10, fill=col, outline=(14, 12, 12), width=4)   # банки и пачки
+        d.rectangle([330, 760, 380, 880], fill=(240, 236, 220), outline=(14, 12, 12), width=3)   # свеча
+        from toonlib import glow
+        glow(img, (355, 735), 120, (255, 170, 70), .9)
+        d = ImageDraw.Draw(img)
+        d.ellipse([344, 712, 366, 750], fill=(255, 210, 110))
+    else:                # к свету: город и фонарь на крыше
+        img = city(lit=0, night=1.0, roof_light=True)
+        img = toonlib.zoom(img, 1.6, .78, .3)
+        d = ImageDraw.Draw(img)
+        d.polygon([(0, H), (W, H), (W * .62, 700), (W * .5, 700)], fill=(24, 24, 30))   # дорога к дому со светом
+        cx, cy = W * .5, 1010   # силуэт со спины, идёт к свету
+        d.ellipse([cx - 26, cy - 160, cx + 26, cy - 108], fill=(8, 8, 12))
+        d.rounded_rectangle([cx - 40, cy - 110, cx + 40, cy - 10], radius=18, fill=(8, 8, 12))
+        d.rectangle([cx - 30, cy - 20, cx - 8, cy + 60], fill=(8, 8, 12))
+        d.rectangle([cx + 8, cy - 30, cx + 30, cy + 48], fill=(8, 8, 12))
+    _cards[kind] = img
+    return img
+
+
+def pretty_card(img, x0, y0, w, h, kind, num, title, col, a=1.0, pulse=0.0):
+    art = card_art(kind).resize((w, int(w * H / W)), Image.LANCZOS)
+    top = max(0, int(art.height * .5 - h * .42))
+    art = art.crop((0, top, w, top + h))
+    m = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(m).rounded_rectangle([0, 0, w - 1, h - 1], radius=28, fill=255)
+    lay = img.copy()
+    glow_l = Image.new("RGB", (W, H))
+    ImageDraw.Draw(glow_l).rounded_rectangle([x0 - 6, y0 - 6, x0 + w + 6, y0 + h + 6], radius=34, fill=tuple(int(c * (.55 + .45 * pulse)) for c in col))
+    from PIL import ImageChops
+    lay = ImageChops.add(lay, glow_l.filter(ImageFilter.GaussianBlur(18)))
+    lay.paste(art, (x0, y0), m)
+    d = ImageDraw.Draw(lay)
+    # затемнение низа карточки под подпись
+    shade = Image.new("L", (w, h), 0)
+    sd = ImageDraw.Draw(shade)
+    for yy in range(h // 2, h):
+        sd.line([0, yy, w, yy], fill=int(220 * (yy - h / 2) / (h / 2)))
+    shade = ImageChops.multiply(shade, m)
+    lay.paste((6, 6, 10), (x0, y0), shade)
+    d.rounded_rectangle([x0, y0, x0 + w, y0 + h], radius=28, outline=col, width=5)
+    d.ellipse([x0 + w / 2 - 34, y0 - 34, x0 + w / 2 + 34, y0 + 34], fill=col, outline=(10, 10, 14), width=5)
+    fn = F(40, FONT_SUB)
+    d.text((x0 + w / 2 - fn.getlength(num) / 2, y0 - 26), num, font=fn, fill=WHITE)
+    f = F(30, FONT_SUB)
+    for i, ln in enumerate(title.split("\n")):
+        d.text((x0 + w / 2 - f.getlength(ln) / 2, y0 + h - 96 + i * 38), ln, font=f, fill=WHITE, stroke_width=3, stroke_fill=(8, 8, 10))
+    return Image.blend(img, lay, a)
+
+
 def e09(t, L, cue):
-    img = Image.new("RGB", (W, H), (8, 10, 16))
+    bg = city(lit=0, night=1.0).filter(ImageFilter.GaussianBlur(10))
+    img = Image.blend(bg, Image.new("RGB", (W, H)), .55)
     d = ImageDraw.Draw(img)
-    f = F(34, FONT_SUB)
-    d.text(((W - f.getlength("ЧТО ДЕЛАТЬ?")) / 2, 250), "ЧТО ДЕЛАТЬ?", font=f, fill=WHITE)
-    img = M.choice_card(img, 40, "Сидеть дома\n(запас на 2 дня)", "home", min(1, t / .3))
-    img = M.choice_card(img, 380, "Идти\nк свету", "run", min(1, max(0, t - .3) / .3))
+    f = F(44, FONT_SUB)
+    d.text(((W - f.getlength("ЧТО ДЕЛАТЬ?")) / 2, 170), "ЧТО ДЕЛАТЬ?", font=f, fill=WHITE, stroke_width=4, stroke_fill=(8, 8, 10))
+    pulse = .5 + .5 * math.sin(t * 4)
+    img = pretty_card(img, 36, 300, 310, 470, "home", "1", "Сидеть дома\nзапас на 2 дня", (90, 150, 230), min(1, t / .3), pulse)
+    img = pretty_card(img, 374, 300, 310, 470, "light", "2", "Идти\nк свету", (240, 170, 60), min(1, max(0, t - .25) / .3), 1 - pulse)
+    d = ImageDraw.Draw(img)
+    d.ellipse([W / 2 - 40, 495, W / 2 + 40, 575], fill=YEL, outline=(10, 10, 14), width=5)
+    fi = F(24, FONT_SUB)
+    d.text((W / 2 - fi.getlength("ИЛИ") / 2, 520), "ИЛИ", font=fi, fill=(20, 20, 24))
     p = (t - cue["09"]) / dur("09.mp3")
     if p > .55:
-        M.big(img, "РЕШАЙ", 780, RED, 80)
-    d = ImageDraw.Draw(img)
+        M.big(img, "РЕШАЙ", 800, RED, 84)
     fp = F(30, FONT_SUB)
     txt = "ОТПРАВЬ ДРУГУ — ОН БЫ ПОШЁЛ?"
+    d = ImageDraw.Draw(img)
     d.rounded_rectangle([W / 2 - fp.getlength(txt) / 2 - 22, 1110, W / 2 + fp.getlength(txt) / 2 + 22, 1168], radius=28, fill=YEL)
     d.text((W / 2 - fp.getlength(txt) / 2, 1121), txt, font=fp, fill=(20, 20, 24))
     blackout_timer(img, "e09", t)

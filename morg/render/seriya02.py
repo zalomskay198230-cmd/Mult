@@ -1,5 +1,6 @@
-"""«НОЧНАЯ СМЕНА». Серия 2 (зрители выбрали «бежать»). Холодный старт: выход заперт снаружи.
-Запуск: python3 seriya02.py ../tts/s02 ../seriya02.mp4"""
+"""«НОЧНАЯ СМЕНА». Серия 2 — ФИНАЛ (зрители выбрали «бежать»). Холодный старт: выход заперт снаружи.
+Развязка: под простынёй сторож, «ты шестой», утром на пятой каталке — герой.
+Запуск: python3 seriya02.py ../tts/s02f ../seriya02.mp4"""
 import os, sys, math, random, importlib.util
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "..", "vakhta", "render"))
@@ -30,11 +31,16 @@ LINES = {
     "05": "Дёргаю дверь выхода. ^Заперто^. Ключ торчит — с *той* стороны.",
     "06": "Скрип затихает. Прямо за ^спиной^.",
     "07": "Под простынёй на каталке шевелится ^рука^. На ней — часы *сторожа*.",
-    "08": "Выбить *окно* на посту или сорвать *простыню*? ^Решай^. И отправь другу — он бы сорвал?",
+    "08": "Срываю *простыню*. Под ней — ^сторож^. Глаза ^открыты^.",
+    "09": "«Ты считал до *пяти*? — шепчет он. — Значит, ты ^шестой^».",
+    "10": "Утром смену принимал *новый* стажёр. А на *пятой* каталке лежал ^я^. С биркой.",
+    "11": "*Подпишись* — скоро новая история.",
 }
 PLAN = [(f"r{k}", [(k, 0.04)], 0.12) for k in LINES]
 PLAN[0] = ("r01", [("01", 0.0)], 0.1)
-PLAN[-1] = ("r08", [("08", 0.05)], 1.0)
+PLAN[7] = ("r08", [("08", 0.05)], 0.2)
+PLAN[8] = ("r09", [("09", 0.05)], 0.6)
+PLAN[-1] = ("r11", [("11", 0.05)], 1.0)
 setup(LINES, PLAN)
 T0 = (2, 15, 12)
 
@@ -196,26 +202,100 @@ def r07(t, L, cue):   # рука из-под простыни, часы стор
     return shake(img, t, 3 if p > .2 else 0)
 
 
+def guard_face(t, eyes_open=True, close=1.0, light=.8, lips=0.0):
+    """лицо сторожа на каталке (вид сверху), простыня откинута"""
+    img = Image.new("RGB", (W * K, H * K), (8, 10, 12))
+    d = SD(img, 0, 0, K)
+    c = lambda v: tuple(int(q * light) for q in v)
+    s_ = close
+    cx, cy = 360, 640
+    d.rectangle([60, cy + 220 * s_, 660, H], fill=c((210, 216, 216)))   # простыня
+    d.ellipse([cx - 210 * s_, cy - 250 * s_, cx + 210 * s_, cy + 250 * s_], fill=c((196, 206, 200)), outline=OUT, width=6)
+    d.chord([cx - 214 * s_, cy - 260 * s_, cx + 214 * s_, cy - 40 * s_], 180, 360, fill=c((170, 170, 176)))   # седые волосы
+    d.chord([cx - 170 * s_, cy + 60 * s_, cx + 170 * s_, cy + 280 * s_], 0, 180, fill=c((180, 180, 186)))    # борода
+    for sx in (-1, 1):
+        ex = cx + sx * 80 * s_
+        if eyes_open:
+            d.ellipse([ex - 44 * s_, cy - 60 * s_, ex + 44 * s_, cy + 4 * s_], fill=(236, 236, 230), outline=OUT, width=4)
+            d.ellipse([ex - 14 * s_, cy - 42 * s_, ex + 14 * s_, cy - 14 * s_], fill=(10, 10, 12))
+        else:
+            d.line([(ex - 40 * s_, cy - 28 * s_), (ex + 40 * s_, cy - 28 * s_)], fill=OUT, width=6)
+    mo = 8 + 30 * lips
+    d.ellipse([cx - 50 * s_, cy + 120 * s_ - mo, cx + 50 * s_, cy + 120 * s_ + mo], fill=(60, 30, 30), outline=OUT, width=4)
+    return M.done(img)
+
+
 def r08(t, L, cue):
-    img = Image.new("RGB", (W, H), (10, 14, 18))
-    d = ImageDraw.Draw(img)
-    f = F(34, FONT_SUB)
-    d.text(((W - f.getlength("ЧТО ДЕЛАТЬ?")) / 2, 250), "ЧТО ДЕЛАТЬ?", font=f, fill=WHITE)
-    img = M.choice_card(img, 40, "Выбить окно\nна посту", "run", min(1, t / .3))
-    img = M.choice_card(img, 380, "Сорвать\nпростыню", "sheet", min(1, max(0, t - .3) / .3))
     p = (t - cue["08"]) / dur("08.mp3")
-    if p > .55:
-        M.big(img, "РЕШАЙ", 780, RED, 80)
+    if p < .35:   # простыня ещё на нём — слетает
+        img = Image.new("RGB", (W, H), (8, 10, 12))
+        d = SD(img, 0, 0, 1)
+        k = M.ease(p / .35)
+        M.gurney(d, 360, 1100 - 600 * k, 2.2, light=.7)
+    else:
+        lit = 1.0 if int(t * 9) % 3 else .35   # свет мигает
+        img = guard_face(t, eyes_open=p > .7, close=1.0, light=.8 * lit)
+        if p > .7:
+            M.big(img, "ГЛАЗА ОТКРЫТЫ", 180, RED, 70)
+    timer(img, t, 31)
+    return shake(img, t, 7 if .33 < p < .42 or .7 < p < .76 else 0)
+
+
+def r09(t, L, cue):
+    p = (t - cue["09"]) / dur("09.mp3")
+    img = guard_face(t, eyes_open=True, close=1.0 + .5 * M.ease(t / L), light=.75,
+                     lips=abs(math.sin(t * 11)) if p < .9 else 0)
+    img = toonlib.zoom(img, 1.3, .5, .62)
+    if p > .6:
+        M.big(img, "ТЫ — ШЕСТОЙ", 180, RED, 96)
+    timer(img, t, 36)
+    return img
+
+
+def r10(t, L, cue):   # утро: новый стажёр, пятая каталка, бирка
+    p = (t - cue["10"]) / dur("10.mp3")
+    if p < .55:
+        img, d = M.corridor(light=1.15)
+        M.draw_gurneys(d, empty5=False)
+        chibi(d, "son", 470, 1180, 2.0, t, "smile", -1, walk=True)
+        img = M.done(img)
+        M.tag(img, "УТРО · 08:00", 110, (20, 22, 24), WHITE, 28)
+    else:
+        img = Image.new("RGB", (W, H))
+        k = M.ease((p - .55) / .45)
+        img = Image.new("RGB", (W, H), (226, 232, 232))
+        d = ImageDraw.Draw(img)
+        d.polygon([(0, 500), (720, 460), (720, 1100), (0, 1140)], fill=(232, 236, 236), outline=(150, 160, 160))   # простыня
+        d.polygon([(720, 820), (520, 790), (470, 840), (520, 900), (720, 900)], fill=(200, 210, 204), outline=(30, 30, 30))   # стопа
+        tag = Image.new("RGBA", (330, 180), (0, 0, 0, 0))
+        td = ImageDraw.Draw(tag)
+        td.rounded_rectangle([0, 0, 329, 179], radius=14, fill=(236, 228, 196, 255), outline=(120, 100, 70, 255), width=4)
+        td.text((24, 18), "№ 5", font=F(32, FONT_SUB), fill=(60, 50, 40))
+        td.text((24, 70), "КОВАЛЁВ Д.", font=F(40, FONT_SUB), fill=(170, 30, 30))
+        td.text((24, 126), "стажёр", font=F(26), fill=(80, 70, 60))
+        tag = tag.rotate(-6, expand=True)
+        d.line([(520, 860), (430, 740)], fill=(180, 170, 140), width=4)
+        img.paste(tag, (170, 560), tag)
+        img = toonlib.zoom(img, 1 + .35 * k, .45, .5)
+    M.timer(img, t, (8, 0, 0))
+    return img
+
+
+def r11(t, L, cue):
+    img = Image.new("RGB", (W, H), (6, 6, 8))
     d = ImageDraw.Draw(img)
-    fp = F(30, FONT_SUB)
-    txt = "ОТПРАВЬ ДРУГУ — ОН БЫ СОРВАЛ?"
-    d.rounded_rectangle([W / 2 - fp.getlength(txt) / 2 - 22, 1110, W / 2 + fp.getlength(txt) / 2 + 22, 1168], radius=28, fill=YEL)
-    d.text((W / 2 - fp.getlength(txt) / 2, 1121), txt, font=fp, fill=(20, 20, 24))
-    timer(img, t, 30)
+    f1, f2 = F(70, FONT_SUB), F(90, FONT_SUB)
+    d.text(((W - f1.getlength("НОЧНАЯ СМЕНА")) / 2, 440), "НОЧНАЯ СМЕНА", font=f1, fill=WHITE)
+    d.text(((W - f2.getlength("КОНЕЦ")) / 2, 530), "КОНЕЦ", font=f2, fill=RED)
+    pop = 1 + .05 * math.sin(t * 8)
+    fp = F(int(36 * pop), FONT_SUB)
+    d.rounded_rectangle([W / 2 - fp.getlength("ПОДПИШИСЬ") / 2 - 26, 680, W / 2 + fp.getlength("ПОДПИШИСЬ") / 2 + 26, 748], radius=32, fill=YEL)
+    d.text((W / 2 - fp.getlength("ПОДПИШИСЬ") / 2, 692), "ПОДПИШИСЬ", font=fp, fill=(20, 20, 24))
     return img
 
 
 if __name__ == "__main__":
     run({n: globals()[n] for n, *_ in PLAN},
         knocks=[span("r03")[0] + .3 + i * .45 for i in range(6)],
-        hits=[span("r01")[0] + .05, span("r06")[0] + span("r06")[1] * .5, span("r07")[0] + span("r07")[1] * .6])
+        hits=[span("r01")[0] + .05, span("r06")[0] + span("r06")[1] * .5, span("r07")[0] + span("r07")[1] * .6,
+              span("r08")[0] + span("r08")[1] * .35, span("r09")[0] + span("r09")[1] * .6])

@@ -119,6 +119,18 @@ for sc, a in cfg.get("hits", []):
     s, l = span[sc]
     add(hit(), s + l * a, 1.0)
 
+# --- шаги: [сцена, доля_старта, кол-во, интервал]
+def step():
+    n = int(.22 * SR)
+    tt = np.arange(n) / SR
+    return (.55 * np.sin(2 * np.pi * 70 * tt) * np.exp(-tt * 30) + .18 * rng.normal(0, 1, n) * np.exp(-tt * 45)).astype(np.float32)
+
+
+for sc, a, cnt, iv in cfg.get("steps", []):
+    s0, l = span[sc]
+    for i in range(int(cnt)):
+        add(step(), s0 + l * a + i * iv, .9)
+
 # --- в конце тихо гаснем
 fade = int(1.2 * SR)
 end = int(T * SR)

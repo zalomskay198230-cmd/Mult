@@ -109,27 +109,32 @@ for sc, a, b in cfg.get("creak", []):
 
 # --- удары (испуг)
 def hit():
-    n = int(1.6 * SR)
+    n = int(2.0 * SR)
     tt = np.arange(n) / SR
-    return (.9 * np.sin(2 * np.pi * (38 + 40 * np.exp(-tt * 7)) * tt) * np.exp(-tt * 2.2)
-            + .25 * rng.normal(0, 1, n) * np.exp(-tt * 18)).astype(np.float32)
+    env = (1 - np.exp(-tt * 40)) * np.exp(-tt * 1.8)
+    return (.55 * np.sin(2 * np.pi * (34 + 22 * np.exp(-tt * 4)) * tt) * env).astype(np.float32)
 
 
 for sc, a in cfg.get("hits", []):
     s, l = span[sc]
-    add(hit(), s + l * a, 1.0)
+    add(hit(), s + l * a, .8)
 
-# --- шаги: [сцена, доля_старта, кол-во, интервал]
+# --- шаги: [сцена, доля_старта, кол-во, интервал] — мягкий шаг подошвой по асфальту
 def step():
-    n = int(.22 * SR)
+    n = int(.16 * SR)
     tt = np.arange(n) / SR
-    return (.55 * np.sin(2 * np.pi * 70 * tt) * np.exp(-tt * 30) + .18 * rng.normal(0, 1, n) * np.exp(-tt * 45)).astype(np.float32)
+    nz = rng.normal(0, 1, n).astype(np.float32)
+    hp = nz - np.convolve(nz, np.ones(6, np.float32) / 6, "same")          # убрать низ — «шорох»
+    lp = np.convolve(hp, np.ones(3, np.float32) / 3, "same")               # убрать резкий верх
+    scuff = lp * np.exp(-tt * 38) * .5
+    thump = np.sin(2 * np.pi * 110 * tt) * np.exp(-tt * 55) * .25
+    return (scuff + thump).astype(np.float32)
 
 
 for sc, a, cnt, iv in cfg.get("steps", []):
     s0, l = span[sc]
     for i in range(int(cnt)):
-        add(step(), s0 + l * a + i * iv, .9)
+        add(step(), s0 + l * a + i * iv, .28 * (.85 + .3 * rng.random()))
 
 # --- в конце тихо гаснем
 fade = int(1.2 * SR)

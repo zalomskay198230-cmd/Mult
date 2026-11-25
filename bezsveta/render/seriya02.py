@@ -32,34 +32,28 @@ def sprite(name):
     return _spr[name]
 
 
-def hero(img, name, cx, bottom, height, t=0.0, tint=(.6, .66, .9), flip=False, bob=0.0, shake_=0.0, light=None):
-    """персонаж-спрайт: масштаб по высоте, ночной тон, дыхание, подпрыгивание при ходьбе, дрожь"""
-    s = sprite(name)
-    breathe = 1 + .012 * math.sin(t * 2.4)
-    h = int(height * breathe)
-    w = int(s.width * h / s.height)
-    sp = s.resize((w, h), Image.LANCZOS)
-    if flip:
-        sp = sp.transpose(Image.FLIP_LEFT_RIGHT)
-    r, g, b, a = sp.split()
-    lit = [r, g, b]
-    if tint:
-        lit = [ch.point(lambda v, k=k: int(v * k)) for ch, k in zip((r, g, b), tint)]
-    sp = Image.merge("RGBA", (*lit, a))
-    if light is not None:   # тёплый свет фонарика на лице (верхняя часть)
-        warm = Image.new("RGBA", sp.size, (255, 200, 130, 0))
-        m = Image.new("L", sp.size, 0)
-        ImageDraw.Draw(m).ellipse([w * .1, -h * .1, w * .9, h * .55], fill=int(110 * light))
-        m = ImageChops.multiply(m.filter(ImageFilter.GaussianBlur(w * .1)), a)
-        sp = Image.composite(Image.alpha_composite(sp, Image.new("RGBA", sp.size, (255, 200, 130, 255))), sp, m.point(lambda v: v // 2))
-    dx = shake_ * math.sin(t * 37) if shake_ else 0
-    dy = -abs(math.sin(t * 7)) * bob
-    x, y = int(cx - w / 2 + dx), int(bottom - h + dy)
-    sh = Image.new("L", (W, H), 0)   # тень под ногами
-    ImageDraw.Draw(sh).ellipse([cx - w * .35, bottom - 10, cx + w * .35, bottom + 14], fill=120)
-    img.paste((0, 0, 0), (0, 0), sh.filter(ImageFilter.GaussianBlur(8)))
-    img.paste(sp, (x, y), sp)
-    return img
+from flatworld import SD, chibi
+FACE = {"e_scared": "shock", "e_whisper": "sad", "e_brave": "angry", "e_calm": "smile", "front": "neutral", "q34": "neutral", "side": "neutral"}
+
+
+def hero(img, name, cx, bottom, height, t=0.0, tint=None, flip=False, bob=0.0, shake_=0.0, light=None):
+    """свой человечек (как в серии 1): крупные планы — большой масштаб, ходьба — ноги шагают"""
+    big = img.resize((W * 2, H * 2), Image.BICUBIC)
+    d = SD(big, 0, 0, 2)
+    s = height / 125.0
+    walk = bob > 0
+    look = (1 if not flip else -1) if name in ("side", "q34") else 0
+    arm = "phone" if name in ("front", "side", "q34") and light is not None else None
+    if name == "e_whisper":
+        arm = "phone"
+    x = cx + (shake_ * math.sin(t * 37) if shake_ else 0)
+    chibi(d, "hero", x, bottom, s, t, FACE.get(name, "neutral"), look, walk=walk, arm=arm)
+    out = big.resize((W, H), Image.LANCZOS)
+    if tint:   # ночной тон только на персонажа не делаем — он и так подсвечен сценой
+        pass
+    if light:
+        glow(out, (cx, bottom - height * .78), height * .35, (255, 200, 130), .5 * light)
+    return out
 
 
 LINES = {
@@ -108,11 +102,11 @@ def darken(img, k):
     return ImageEnhance.Brightness(img).enhance(k)
 
 
-def step_text(img, t, t0, n, y=300):
+def step_text(img, t, t0, n, y=150):
     for i in range(n):
         if t > t0 + i * .5:
             a = min(1, (t - t0 - i * .5) / .1)
-            M.big(img, "ШАГ", y + i * 110 + 10 * math.sin(i), (int(220 * a), int(220 * a), int(226 * a)), 90)
+            M.big(img, "ШАГ", y + i * 80, (int(220 * a), int(220 * a), int(226 * a)), 64)
 
 
 # ---------- сцены ----------
@@ -120,11 +114,11 @@ def z01(t, L, cue):   # холодный старт: фонарик гаснет
     p = (t - cue["01"]) / dur("01.mp3")
     img = darken(street(), .45)
     on = p < .35 and int(t * 14) % 3
-    img = hero(img, "e_scared", W / 2, H + 40, 820, t, tint=(.55, .6, .85), light=.9 if on else .0, shake_=4)
+    img = hero(img, "e_scared", W / 2, H + 120, 1000, t, tint=(.55, .6, .85), light=.9 if on else .0, shake_=4)
     if not on:
         img = darken(img, .55)
     if p > .5:
-        M.big(img, "ШАГИ", 220, RED, 120)
+        M.big(img, "ШАГИ", 160, RED, 110)
     B.blackout_timer(img, "z01", t)
     return shake(img, t, 5 if .35 < p < .45 else 0)
 
@@ -132,8 +126,8 @@ def z01(t, L, cue):   # холодный старт: фонарик гаснет
 def z02(t, L, cue):   # выбор зрителей
     img = darken(B.city(lit=0, night=1.0, roof_light=True), .9)
     img = img.filter(ImageFilter.GaussianBlur(3))
-    img = hero(img, "e_brave", W / 2, H + 30, 760, t, tint=(.62, .68, .95))
-    M.big(img, "5 МИНУТ НАЗАД", 290, WHITE, 60)
+    img = hero(img, "e_brave", W / 2, H + 120, 1000, t, tint=(.62, .68, .95))
+    M.big(img, "5 МИНУТ НАЗАД", 190, WHITE, 56)
     d = ImageDraw.Draw(img)
     k = min(1, t / 1.0)
     v = .3 + (.62 - .3) * k
@@ -195,7 +189,7 @@ def z06(t, L, cue):   # фонарик гаснет
 def z07(t, L, cue):   # шаги в темноте
     p = (t - cue["07"]) / dur("07.mp3")
     img = darken(street(), .12)
-    img = hero(img, "e_whisper", W / 2, H + 40, 820, t, tint=(.35, .4, .6))
+    img = hero(img, "e_whisper", W / 2, H + 120, 1000, t, tint=(.35, .4, .6))
     step_text(img, t, cue["07"] + dur("07.mp3") * .1, 3)
     B.blackout_timer(img, "z07", t)
     return img
@@ -204,9 +198,9 @@ def z07(t, L, cue):   # шаги в темноте
 def z08(t, L, cue):   # остановился — шаги тоже
     p = (t - cue["08"]) / dur("08.mp3")
     img = darken(street(), .12)
-    img = hero(img, "e_scared", W / 2, H + 40, 860, t, tint=(.35, .4, .6), shake_=3)
+    img = hero(img, "e_scared", W / 2, H + 120, 1000, t, tint=(.35, .4, .6), shake_=3)
     if p > .55:
-        M.big(img, "ТИШИНА", 260, WHITE, 100)
+        M.big(img, "ТИШИНА", 170, WHITE, 90)
     B.blackout_timer(img, "z08", t)
     return img
 

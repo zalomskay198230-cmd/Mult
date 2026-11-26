@@ -181,7 +181,7 @@ def k03(t, L, cue):   # «вы выбрали — колодец»
     return img
 
 
-def choice_banner(img, t, txt, full, sub="вариант №2 · решили комментарии"):
+def choice_banner(img, t, txt, full, sub="67% голосов в опросе"):
     if t >= full:
         return img
     a = min(1, t / .15, (full - t) / .25)

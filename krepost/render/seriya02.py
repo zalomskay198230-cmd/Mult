@@ -64,7 +64,7 @@ FLOOR, PX_M = 300, 110          # пол гаража (экранный y) и п
 PX0, PX1 = 250, 470             # стенки ямы
 
 
-def section(t, depth, water=0.0, hero=True, face="angry", dig=True, knock=0.0, slab=False, ladder=False, eyes=False):
+def section(t, depth, water=0.0, hero=True, face="angry", dig=True, knock=0.0, slab=False, ladder=False, eyes=False, hero_y=None, hole=False):
     img = Image.new("RGB", (W * 2, H * 2))
     d = SD(img, 0, 0, 2)
     # гараж: стены, полка, лампа
@@ -105,13 +105,15 @@ def section(t, depth, water=0.0, hero=True, face="angry", dig=True, knock=0.0, s
         d.rectangle([PX0 - 30, FLOOR - 26, PX1 + 30, FLOOR + 4], fill=(150, 150, 152), outline=OUT, width=4)
         for x in range(PX0, PX1, 50):
             d.line([x, FLOOR - 20, x + 30, FLOOR - 4], fill=(120, 120, 124), width=2)
+    if hole:   # боковой ход у дна
+        d.ellipse([PX1 - 30, bot - 120, PX1 + 110, bot - 10], fill=(18, 14, 14), outline=OUT, width=4)
     # мерная рейка справа
     for m in range(1, 7):
         y = FLOOR + m * PX_M
         d.line([PX1 + 30, y, PX1 + 70, y], fill=(240, 236, 220), width=3)
         d.text((PX1 + 80, y - 30), f"{m} м", font=F(52, FONT_SUB), fill=(240, 236, 220) if m <= depth + .01 else (150, 130, 110))
     if hero:
-        hy = bot - (water * 60 * .6 if water else 0)
+        hy = hero_y if hero_y is not None else bot - (water * 60 * .6 if water else 0)
         arm = "shovel" if dig else "up"
         bob = 6 * abs(math.sin(t * 4)) if dig else 0
         chibi(d, "hero", (PX0 + PX1) / 2 + 20, hy - bob, 1.25, t, face, -1, arm=arm)
